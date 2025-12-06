@@ -1,15 +1,19 @@
 #pragma once
 #include <Arduino.h>
 #include <I2CUtils.h>
+#include "scheduler.h"
 
 class SensorBase {
 public:
+    friend class Scheduler;
     SensorBase(const char* name, uint8_t muxChannel) :
         _name(name), 
         _muxChannel(muxChannel),
         _taskHandle(nullptr), 
         _taskIntervalMs(50) 
-    {}
+    {
+        Scheduler::instance().registerSensor(this);
+    }
     
     virtual ~SensorBase() {}
 
@@ -90,6 +94,10 @@ protected:
     uint32_t _taskCore = 0;
     volatile bool _paused = false;
 
+    uint32_t _minInterval = 10;
+    uint32_t _maxInterval = 200;
+    uint32_t _currentInterval = 50;
+
 private:
     // static call for FreeRTOS
     static void _taskEntry(void* ptr) {
@@ -125,8 +133,9 @@ private:
             _avgReadDuration = (_avgReadDuration * 7 + _lastReadDuration) / 8;
             _readCount++;
             _lastHeartbeat = millis();
-
-            vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
+            
+            _currentInterval = Scheduler::instance().computeInterval(this, _mutexWaitTime);
+            vTaskDelay(_currentInterval / portTICK_PERIOD_MS);
     }
 }
 

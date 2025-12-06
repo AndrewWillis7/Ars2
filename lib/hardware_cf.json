@@ -3,5 +3,26 @@
         "sda": 6,
         "scl": 7,
         "mux_address": 112
+    },
+
+    "s_cs": {
+        "csc1": 2,
+        "csc2": 0
+    },
+
+    "s_op": {
+        "opc1": 4,
+        "opc2": 3
+    },
+
+    "en_chip": {
+        "enclk": 9,
+        "encs": 43
+    },
+
+    "s_en": {
+        "enc1": 8,
+        "enc2": 7,
+        "enc3": 44
     }
 }

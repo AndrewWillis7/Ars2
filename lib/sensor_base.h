@@ -52,6 +52,24 @@ public:
     virtual void debugPrint() {
         Serial.printf("[%s] No debugPrint override.\n", _name);
     }
+
+    bool isAlive() const {
+        return (millis() - _lastHeartbeat < 2000); // 2 sec no signal? Dead.
+    }
+
+    void printStats() {
+        Serial.printf(
+            "[%s] core=%u reads=%u last=%uus avg=%uus mutexWait=%uus hb=%ums\n",
+            _name,
+            _taskCore,
+            _readCount,
+            _lastReadDuration,
+            _avgReadDuration,
+            _mutexWaitTime,
+            millis() - _lastHeartbeat
+        );
+    }
+
     
 protected:
     const char* _name;
@@ -67,6 +85,13 @@ protected:
         }
     }
 
+    uint32_t _lastReadDuration = 0;
+    uint32_t _avgReadDuration = 0;
+    uint32_t _readCount = 0;
+    uint32_t _mutexWaitTime = 0;
+    uint32_t _lastHeartbeat = 0;
+    uint32_t _taskCore = 0;
+
 private:
     // static call for FreeRTOS
     static void _taskEntry(void* ptr) {
@@ -74,14 +99,31 @@ private:
     }
 
     void taskLoop() {
+        _taskCore = xPortGetCoreID();
         for (;;) {
+            uint32_t t0 = micros();
+
+            // measure the mutex wait
+            uint32_t waitStart = micros();
             I2CUtils::i2cLock();
-            selectMux();
-            readRaw(); // We end up using the blocking aqui cause it doesnt matter based on setup
+            _mutexWaitTime = micros() - waitStart;
+
+            I2CUtils::selectChannel(_muxChannel);
+
+            // measure the read speed
+            uint32_t readStart = micros();
+            readRaw();
+            _lastReadDuration = micros() - readStart;
+
+            // Running average
+            _avgReadDuration = (_avgReadDuration * 7 + _lastReadDuration) / 8;
+
             I2CUtils::i2cUnlock();
 
-            _lastReadTime = millis();
-            vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
+            _readCount++;
+            _lastHeartbeat = millis();
+            
+            vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);            
         }
     }
 };

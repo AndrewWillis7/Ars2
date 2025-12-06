@@ -18,52 +18,89 @@ EncoderSensor enc1("Encoder1", HW_SC_EN1);
 EncoderSensor enc2("Encoder2", HW_SC_EN2);
 EncoderSensor enc3("Encoder3", HW_SC_EN3);
 
-bool setupComplete = false;
+bool is_setup = false;
+
+// -- Start-Ups --
+void debug_startup() {
+    Serial.begin(115200);
+    delay(100);
+    I2CUtils::begin();
+
+    while (!Serial.available()) delay(10);
+    Serial.read();
+
+    I2CUtils::scanI2C();
+
+    // Setups
+    while (!Serial.available()) delay(10);
+    Serial.read();
+
+    color1.setup();
+    color2.setup();
+
+    opt1.setup();
+    opt2.setup();
+
+    enc1.setup();
+    enc2.setup();
+    enc3.setup();
+
+    Serial.print("\nSetup Complete!");
+
+    // Task Starts
+    while (!Serial.available()) delay(10);
+    Serial.read();
+
+    color1.startTask(50, 1);
+    color2.startTask(50, 1);
+
+    opt1.startTask(50, 1);
+    opt2.startTask(50, 1);
+
+    enc1.startTask(50, 1, 1);
+    enc2.startTask(50, 1, 1);
+    enc3.startTask(50, 1, 1);
+
+    is_setup = true;
+}
+
+void default_startup() {
+    Serial.begin(115200);
+    delay(100);
+    I2CUtils::begin();
+
+    color1.setup();
+    color2.setup();
+
+    opt1.setup();
+    opt2.setup();
+
+    enc1.setup();
+    enc2.setup();
+    enc3.setup();
+
+    delay(100);
+
+    color1.startTask(50, 1);
+    color2.startTask(50, 1);
+
+    opt1.startTask(50, 1);
+    opt2.startTask(50, 1);
+
+    enc1.startTask(50, 1, 1);
+    enc2.startTask(50, 1, 1);
+    enc3.startTask(50, 1, 1);
+
+    is_setup = true;
+}
+
 void setup() {
-  Serial.begin(115200);
-  delay(100);
-  I2CUtils::begin();
-
-  while (!Serial.available()) delay(10);
-  Serial.read();
-
-  I2CUtils::scanI2C();
-
-  // Setups
-  while (!Serial.available()) delay(10);
-  Serial.read();
-
-  color1.setup();
-  color2.setup();
-
-  opt1.setup();
-  opt2.setup();
-
-  enc1.setup();
-  enc2.setup();
-  enc3.setup();
-
-  Serial.print("\nSetup Complete!");
-
-  // Task Starts
-  while (!Serial.available()) delay(10);
-  Serial.read();
-
-  color1.startTask(50, 1);
-  color2.startTask(50, 1);
-
-  opt1.startTask(50, 1);
-  opt2.startTask(50, 1);
-
-  enc1.startTask(50, 1, 1);
-  enc2.startTask(50, 1, 1);
-  enc3.startTask(50, 1, 1);
-
-  setupComplete = true;
+  //debug_startup();
+  default_startup();
 }
 
 void loop() {
-  if (!setupComplete) {
+  if (!is_setup) {
     return;
   }
 

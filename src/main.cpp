@@ -4,10 +4,14 @@
 
 // Sensor Includes
 #include "../lib/sensors/color_sensor.h"
+#include "../lib/sensors/optical_sensor.h"
 
 // Sensor Objects
 ColorSensor color1("Color1", HW_SC_CS1);
 ColorSensor color2("Color2", HW_SC_CS2);
+
+OpticalSensor opt1("Optical1", HW_SC_OP1);
+OpticalSensor opt2("Optical2", HW_SC_OP2);
 
 bool setupComplete = false;
 void setup() {
@@ -25,6 +29,10 @@ void setup() {
 
   color1.setup();
   color2.setup();
+
+  opt1.setup();
+  opt2.setup();
+
   Serial.print("\nSetup Complete!");
 
   while (!Serial.available()) delay(10);
@@ -32,6 +40,9 @@ void setup() {
 
   color1.startTask(50, 1);
   color2.startTask(50, 1);
+
+  opt1.startTask(50, 1);
+  opt2.startTask(50, 1);
 
   setupComplete = true;
 }
@@ -45,6 +56,10 @@ void loop() {
   if (millis() - last > 500) {
     color1.debugPrint();
     color2.debugPrint();
+
+    opt1.debugPrint();
+    opt2.debugPrint();
+
     last = millis();
     //Serial.print(I2CUtils::getCurrentChannel());
     Serial.println();

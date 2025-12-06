@@ -19,11 +19,12 @@ public:
     // -- Blocking Aqui --
     virtual void readRaw() = 0;
     virtual void readBlocking() {
-        I2CUtils::i2cLock();
-        selectMux();
+        I2CUtils::ScopedI2C guard(_muxChannel);
+        if (!guard.ok()) {
+            // Mux Failure
+            return;
+        }
         readRaw();
-        I2CUtils::i2cUnlock();
-
         _lastReadTime = millis();
     };
 
@@ -40,13 +41,17 @@ public:
 
     bool taskRunning() const {return _taskHandle != nullptr;}
 
-    // Stop running task
+    // task Control
     void stopTask() {
         if (_taskHandle) {
             vTaskDelete(_taskHandle);
             _taskHandle = nullptr;
         }
     }
+
+    void pauseTask() {_paused = true;}
+    void resumeTask() {_paused = false;}
+    bool isPaused() const {return _paused;}
 
     // -- Debug --
     virtual void debugPrint() {
@@ -77,20 +82,13 @@ protected:
     TaskHandle_t _taskHandle;
     uint32_t _taskIntervalMs;
     uint32_t _lastReadTime = 0;
-
-    void selectMux() {
-        if (!I2CUtils::selectChannel(_muxChannel)) {
-            Serial.printf("[%s] Failed to select myx channel %d\n",
-                _name, _muxChannel);
-        }
-    }
-
     uint32_t _lastReadDuration = 0;
     uint32_t _avgReadDuration = 0;
     uint32_t _readCount = 0;
     uint32_t _mutexWaitTime = 0;
     uint32_t _lastHeartbeat = 0;
     uint32_t _taskCore = 0;
+    volatile bool _paused = false;
 
 private:
     // static call for FreeRTOS
@@ -101,6 +99,11 @@ private:
     void taskLoop() {
         _taskCore = xPortGetCoreID();
         for (;;) {
+            if (_paused) {
+                vTaskDelay(5 / portTICK_PERIOD_MS);
+                continue;
+            }
+
             uint32_t t0 = micros();
 
             // measure the mutex wait
@@ -108,7 +111,12 @@ private:
             I2CUtils::i2cLock();
             _mutexWaitTime = micros() - waitStart;
 
-            I2CUtils::selectChannel(_muxChannel);
+            if (!I2CUtils::ensureChannel(_muxChannel)) {
+                // Mux Failure -> record error, skip the cycle
+                I2CUtils::i2cUnlock();
+                vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
+                continue;
+            }
 
             // measure the read speed
             uint32_t readStart = micros();

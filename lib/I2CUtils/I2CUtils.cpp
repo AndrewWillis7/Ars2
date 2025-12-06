@@ -14,9 +14,24 @@ void begin() {
 }
 
 bool selectChannel(uint8_t ch) {
+    if (ch == currentChannel) {
+        return true; // Channel is set, no traffic
+    }
+
     Wire.beginTransmission(MUX_ADDR);
     Wire.write(1 << ch);
-    return Wire.endTransmission() == 0;
+    uint8_t err = Wire.endTransmission();
+
+    if (err == 0) {
+        currentChannel = ch;
+        return true;
+    }
+    return false;
+}
+
+bool ensureChannel(uint8_t ch) {
+    if (currentChannel == ch) return true;
+    return selectChannel(ch);
 }
 
 bool busIsStuck() {

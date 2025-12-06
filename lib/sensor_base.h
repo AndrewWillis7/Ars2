@@ -19,10 +19,10 @@ public:
     // -- Blocking Aqui --
     virtual void readRaw() = 0;
     virtual void readBlocking() {
-        i2cLock();
+        I2CUtils::i2cLock();
         selectMux();
         readRaw();
-        i2cUnlock();
+        I2CUtils::i2cUnlock();
 
         _lastReadTime = millis();
     };
@@ -61,7 +61,7 @@ protected:
     uint32_t _lastReadTime = 0;
 
     void selectMux() {
-        if (!selectI2CChannel(_muxChannel)) {
+        if (!I2CUtils::selectChannel(_muxChannel)) {
             Serial.printf("[%s] Failed to select myx channel %d\n",
                 _name, _muxChannel);
         }
@@ -75,10 +75,10 @@ private:
 
     void taskLoop() {
         for (;;) {
-            i2cLock();
+            I2CUtils::i2cLock();
             selectMux();
             readRaw(); // We end up using the blocking aqui cause it doesnt matter based on setup
-            i2cUnlock();
+            I2CUtils::i2cUnlock();
 
             _lastReadTime = millis();
             vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);

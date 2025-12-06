@@ -1,11 +1,10 @@
 #include <Arduino.h>
-#include "../lib/util.h"
+#include <I2CUtils.h>
 
 void setup() {
   Serial.begin(115200);
   Wire.begin();
-
-  initI2CUtilities();
+  I2CUtils::begin();
 }
 
 void loop() {

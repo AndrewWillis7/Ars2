@@ -105,7 +105,7 @@ void loop() {
   }
 
   static uint32_t last = 0;
-  if (millis() - last > 500) {
+  // if (millis() - last > 500) {
     color1.debugPrint();
     color2.debugPrint();
 
@@ -119,5 +119,6 @@ void loop() {
     last = millis();
     //Serial.print(I2CUtils::getCurrentChannel());
     Serial.println();
-  }
+    
+  // }
 }

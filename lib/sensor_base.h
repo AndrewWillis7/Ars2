@@ -3,9 +3,33 @@
 #include <I2CUtils.h>
 #include "scheduler.h"
 
+/*
+Sensor Base
+
+Abstract foundation for all I2C driven sensors in the arsenal
+Each sensor will:
+ * Identify itself with a name
+ * Live on a specific TCA9548A mux Channel
+ * Provides a blocking 'readRaw()' implementation
+ * Also runs its own FreeRTOS task for data acquisition
+
+Core Principles:
+ * All I2C access is mutex-protected through I2CUtils
+ * readRaw() is always executed when the channel is selected
+ * Scheduler computes a dynamic per-sensor interval based on the mutex pressure
+ * Sensors send a periodic "heartbeat" to verify life
+*/
+
 class SensorBase {
 public:
     friend class Scheduler;
+
+    /*
+    Constructor
+
+    Registers the new sensor with the global schedular instance.
+    The mux channel determines which TCA9548A port is selected
+    */
     SensorBase(const char* name, uint8_t muxChannel) :
         _name(name), 
         _muxChannel(muxChannel),
@@ -17,11 +41,38 @@ public:
     
     virtual ~SensorBase() {}
 
-    // -- Setup --
+    // -----------------------------------------------------------------------
+    // SETUP
+    // -----------------------------------------------------------------------
+
+    /*
+    called once during system init.
+    Child classes must handle I2C begin(), presence checks, and config
+    */
     virtual void setup() = 0;
 
-    // -- Blocking Aqui --
+    // -----------------------------------------------------------------------
+    // BLOCKING AQUISITION
+    // -----------------------------------------------------------------------
+
+    /*
+    readRaw()
+    
+    Actual sensor transaction: perform I2C reads, update fields.
+    Must be implemented for sensors to work, derived by the child
+    This function MUST NOT select channels or manage locks
+    */
     virtual void readRaw() = 0;
+
+    /*
+    readBlocking()
+
+    Safe synchronous sensor read for the main loop or for debug
+    This:
+     * Takes the global I2C Mutex
+     * selects the mux channel for this sensor
+     * calls readRaw()
+    */
     virtual void readBlocking() {
         I2CUtils::ScopedI2C guard(_muxChannel);
         if (!guard.ok()) {
@@ -35,7 +86,17 @@ public:
     // Called to force a synchronous update
     void updateBlocking() {readBlocking();}
 
-    // -- Task-based Aqui (Optional technically) --
+    // -----------------------------------------------------------------------
+    // FreeRTOS task Acquisition Path
+    // -----------------------------------------------------------------------
+
+    /*
+    startTask()
+
+    Launches a periodic acquisition task.
+    intervalMs - desired nominal read interval
+    core - CPU core affinity (literally core 1 or 0)
+    */
     void startTask(uint32_t intervalMs = 20, BaseType_t core = tskNO_AFFINITY) {
         _taskIntervalMs = intervalMs;
         xTaskCreatePinnedToCore(
@@ -104,6 +165,22 @@ private:
         reinterpret_cast<SensorBase*>(ptr)->taskLoop();
     }
 
+    /*
+    taskLoop()
+
+    Main asynchronous loop
+    Each iteration:
+        1. Waits if paused
+        2. Locks I2C bus (scopedLock ideally)
+        3. selects mux channel
+        4. Performs readRaw() under lock
+        5. Updates timing statistics
+        6. Computes next interval via Scheduler
+        7. Sleeps
+    
+    Locking around the entire transaction ensures the sensor read
+    with respect to other I2C devices
+    */
     void taskLoop() {
         _taskCore = xPortGetCoreID();
 

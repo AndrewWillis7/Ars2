@@ -25,6 +25,8 @@ extern volatile uint8_t currentChannel;
 
 // -- setup --
 void begin();
+void scanI2C();
+void selectMuxRaw(uint8_t ch);
 
 // -- Mutex helpers --
 inline void i2cLock() {

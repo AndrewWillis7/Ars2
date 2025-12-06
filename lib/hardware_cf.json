@@ -1,13 +1,13 @@
 {
     "i2c": {
-        "sda": 6,
-        "scl": 7,
+        "sda": 5,
+        "scl": 6,
         "mux_address": 112
     },
 
     "s_cs": {
         "csc1": 2,
-        "csc2": 0
+        "csc2": 3
     },
 
     "s_op": {

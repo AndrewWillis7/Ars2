@@ -39,7 +39,7 @@ header = f"""#pragma once
 // Hardware I2C _
 #define HW_I2C_SDA {sda}
 #define HW_I2C_SCL {scl}
-#define HW_I2C_MUX_ADDR {mux}
+#define HW_I2C_MUX_ADDR 0x{mux:02X}
 
 // Hardware Senser Channel _
 #define HW_SC_CS1 {color1}

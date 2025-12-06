@@ -98,40 +98,38 @@ private:
 
     void taskLoop() {
         _taskCore = xPortGetCoreID();
+
         for (;;) {
             if (_paused) {
                 vTaskDelay(5 / portTICK_PERIOD_MS);
                 continue;
             }
 
-            uint32_t t0 = micros();
+            uint32_t readStart = micros();
 
-            // measure the mutex wait
-            uint32_t waitStart = micros();
-            I2CUtils::i2cLock();
-            _mutexWaitTime = micros() - waitStart;
+            {
+                // FULL LOCK during entire sensor transaction
+                I2CUtils::ScopedLock lock;
 
-            if (!I2CUtils::ensureChannel(_muxChannel)) {
-                // Mux Failure -> record error, skip the cycle
-                I2CUtils::i2cUnlock();
-                vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
-                continue;
+                // Select mux channel
+                if (!I2CUtils::selectChannel(_muxChannel)) {
+                    vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
+                    continue;
+                }
+
+                // Perform full sensor read while locked
+                readRaw();
             }
 
-            // measure the read speed
-            uint32_t readStart = micros();
-            readRaw();
             _lastReadDuration = micros() - readStart;
-
-            // Running average
             _avgReadDuration = (_avgReadDuration * 7 + _lastReadDuration) / 8;
-
-            I2CUtils::i2cUnlock();
-
             _readCount++;
             _lastHeartbeat = millis();
-            
-            vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);            
-        }
+
+            vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
     }
+}
+
+    
+
 };

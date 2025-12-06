@@ -9,8 +9,11 @@ public:
     {}
 
     void setup() override {
-        I2CUtils::ScopedI2C guard(_muxChannel);
-        if (!guard.ok()) {
+        I2CUtils::i2cLock();
+        bool muxOK = I2CUtils::selectChannel(_muxChannel);
+        I2CUtils::i2cUnlock();
+
+        if (!muxOK) {
             Serial.printf("[%s] MUX select failed\n", _name);
             return;
         }
@@ -19,6 +22,10 @@ public:
             Serial.printf("[%s] Color sensor not found!\n", _name);
             return;
         }
+        
+        Serial.printf("Color sensor on CH%u initialized OK\n", _muxChannel);
+        uint8_t id = tcs.read8(TCS34725_ID);
+        Serial.printf("CH%u: ID=0x%02X\n", _muxChannel, id);
     }
 
     void readRaw() override {

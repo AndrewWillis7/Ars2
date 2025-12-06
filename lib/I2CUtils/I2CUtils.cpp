@@ -8,6 +8,7 @@ SemaphoreHandle_t I2C_Mutex = nullptr;
 uint32_t totalLocks = 0;
 uint32_t totalUnlocks = 0;
 uint32_t totalMutexWaits = 0;
+volatile uint8_t currentChannel = 255;
 
 void begin() {
     I2C_Mutex = xSemaphoreCreateMutex();

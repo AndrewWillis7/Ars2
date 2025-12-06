@@ -14,8 +14,8 @@
 #define HW_SC_OP1 3
 #define HW_SC_OP2 4
 
-#define HW_SC_EN1 8
-#define HW_SC_EN2 7
+#define HW_SC_EN1 7
+#define HW_SC_EN2 8
 #define HW_SC_EN3 44
 
 // Hardware Chip _

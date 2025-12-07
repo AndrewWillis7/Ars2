@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <I2CUtils.h>
 #include <hw_config.h>
+#include <RS485comm.h>
 
 // Sensor Includes
 #include "../lib/sensors/color_sensor.h"
@@ -33,6 +34,7 @@ bool debugModeSensor = false;
 // -- Start-Ups --
 void debug_startup() {
     Serial.begin(115200);
+    RS485comm::begin(Serial1, 115200);
     delay(100);
     I2CUtils::begin();
 
@@ -79,6 +81,7 @@ void debug_startup() {
 
 void default_startup() {
     Serial.begin(115200);
+    RS485comm::begin(Serial1, 115200);
     delay(100);
     I2CUtils::begin();
 

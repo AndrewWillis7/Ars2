@@ -24,5 +24,15 @@
         "enc1": 7,
         "enc2": 8,
         "enc3": 44
+    },
+
+    "phy": {
+        "wh_dist_center": 3.056,
+        "hor_dist_center": 0.832,
+        "t_p_in": 162.9746617
+    },
+
+    "comm": {
+        "en_pin": 0
     }
 }

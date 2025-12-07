@@ -32,6 +32,16 @@ encoder1 = data["s_en"]["enc1"]
 encoder2 = data["s_en"]["enc2"]
 encoder3 = data["s_en"]["enc3"]
 
+# PHYSICAL
+
+wheelDistanceCenter = data["phy"]["wh_dist_center"]
+horizontalDistanceCenter = data["phy"]["hor_dist_center"]
+ticksPerInch = data["phy"]["t_p_in"]
+
+# COMMUNICATION
+
+rs_enablePin = data["comm"]["en_pin"]
+
 header = f"""#pragma once
 
 //AUTO-GENERATED FILE -- DO NOT EDIT
@@ -55,6 +65,14 @@ header = f"""#pragma once
 // Hardware Chip _
 #define HW_C_ENCLK {encoderCLK}
 #define HW_C_ENCS {encoderCS}
+
+// Physical Robot
+#define PHY_WH_DIST_CEN {wheelDistanceCenter}
+#define PHY_HOR_DIST_CEN {horizontalDistanceCenter}
+#define PHY_TICK_P_IN {ticksPerInch}
+
+// Communication
+#define COMM_EN_PIN {rs_enablePin}
 
 """
 

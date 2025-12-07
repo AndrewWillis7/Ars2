@@ -18,7 +18,17 @@ EncoderSensor enc1("Encoder1", HW_SC_EN1);
 EncoderSensor enc2("Encoder2", HW_SC_EN2);
 EncoderSensor enc3("Encoder3", HW_SC_EN3);
 
+// Process Includes
+#include "../lib/processes/odometry.h"
+
+// Process Objects
+Odometry odoCalc(&enc1, &enc2, &enc3);
+
 bool is_setup = false;
+
+//
+bool debugModeSensor = false;
+//
 
 // -- Start-Ups --
 void debug_startup() {
@@ -61,6 +71,9 @@ void debug_startup() {
     enc2.startTask(50, 1, 1);
     enc3.startTask(50, 1, 1);
 
+    // Post-Process Starts
+    odoCalc.setup();
+
     is_setup = true;
 }
 
@@ -91,12 +104,14 @@ void default_startup() {
     enc2.startTask(50, 1, 1);
     enc3.startTask(50, 1, 1);
 
+    odoCalc.setup();
+
     is_setup = true;
 }
 
 void setup() {
-  //debug_startup();
-  default_startup();
+  debug_startup();
+  //default_startup();
 }
 
 void loop() {
@@ -105,7 +120,7 @@ void loop() {
   }
 
   static uint32_t last = 0;
-  // if (millis() - last > 500) {
+  if (millis() - last > 500 && debugModeSensor) {
     color1.debugPrint();
     color2.debugPrint();
 
@@ -120,5 +135,7 @@ void loop() {
     //Serial.print(I2CUtils::getCurrentChannel());
     Serial.println();
     
-  // }
+  } else { // When we are not in Debug, we send packets
+    // Packet = #Oxyh#Pxyh#Fxyh#Crgb
+  }
 }

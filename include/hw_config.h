@@ -22,3 +22,11 @@
 #define HW_C_ENCLK 9
 #define HW_C_ENCS 43
 
+// Physical Robot
+#define PHY_WH_DIST_CEN 3.056
+#define PHY_HOR_DIST_CEN 0.832
+#define PHY_TICK_P_IN 162.9746617
+
+// Communication
+#define COMM_EN_PIN 0
+

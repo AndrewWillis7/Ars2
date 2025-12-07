@@ -1,0 +1,54 @@
+#pragma once
+#include <Arduino.h>
+#include <RS485comm.h>
+#include "../lib/post_process.h"
+
+class RS485Reciever : public PostProcess {
+public:
+    RS485Reciever() : PostProcess("RS485-RX") {}
+
+    void setup() override {
+        startTask(1, 1); // check every 1ms
+        rxBuffer.reserve(128);
+    }
+
+protected:
+    void runOnce() override {
+        HardwareSerial* port = RS485comm::serialPort;
+        if (!port) return;
+
+        while (port->available()) {
+            char c = port->read();
+            processIncoming(c);
+        }
+    }
+
+private:
+    String rxBuffer;
+    bool inPacket = false;
+
+    void processIncoming(char c) {
+        if (!inPacket) {
+            if (c == RS485comm::HEAD) {
+                inPacket = true;
+                rxBuffer = "";
+            }
+            return;
+        }
+
+        if (c == '\n') {
+            handlePacket(rxBuffer);
+            inPacket = false;
+            return;
+        }
+
+        if (c != '\r') {
+            rxBuffer += c;
+        }
+    }
+
+    void handlePacket(const String& packet) {
+        Serial.printf("[RS485] RX: %s\n", packet.c_str());
+        // TODO: dispatch the packet to whoever
+    }
+};

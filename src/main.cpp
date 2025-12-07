@@ -21,9 +21,11 @@ EncoderSensor enc3("Encoder3", HW_SC_EN3);
 
 // Process Includes
 #include "../lib/processes/odometry.h"
+#include "../lib/processes/RS485Reciever.h"
 
 // Process Objects
 Odometry odoCalc(&enc1, &enc2, &enc3);
+RS485Reciever rs485rx;
 
 bool is_setup = false;
 
@@ -37,6 +39,7 @@ void debug_startup() {
     RS485comm::begin(Serial1, 115200);
     delay(100);
     I2CUtils::begin();
+    rs485rx.setup();
 
     while (!Serial.available()) delay(10);
     Serial.read();
@@ -57,7 +60,10 @@ void debug_startup() {
     enc2.setup();
     enc3.setup();
 
-    Serial.print("\nSetup Complete!");
+    Serial.print("\nSetup Complete! Attempting Comm Ping...");
+
+    RS485comm::sendRaw("PING FROM ESP!");
+    delay(1000); // Wait for response
 
     // Task Starts
     while (!Serial.available()) delay(10);
@@ -84,6 +90,7 @@ void default_startup() {
     RS485comm::begin(Serial1, 115200);
     delay(100);
     I2CUtils::begin();
+    rs485rx.setup();
 
     color1.setup();
     color2.setup();

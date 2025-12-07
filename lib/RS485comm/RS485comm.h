@@ -10,6 +10,7 @@ static const char HEAD = '#';
 static const char* FOOTER = "\r\n";
 
 extern SemaphoreHandle_t RS485_Mutex;
+extern HardwareSerial* serialPort;
 
 extern uint32_t totalLocks;
 extern uint32_t totalUnlocks;

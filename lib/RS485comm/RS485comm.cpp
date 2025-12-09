@@ -47,7 +47,7 @@ void begin(HardwareSerial& serial, uint32_t baud) {
     pinMode(enablePin, OUTPUT);
     enableRX(); // idle state → receiver enabled
 
-    serialPort->begin(baud, COMM_RX_PIN, COMM_TX_PIN);
+    serialPort->begin(baud, SERIAL_8N1, COMM_RX_PIN, COMM_TX_PIN);
     delay(50); // settle
 }
 

@@ -130,7 +130,6 @@ void comm_startup() {
 
     Serial.print("Expecting Input to be sent");
 
-    RS485comm::enableTX();
     RS485comm::sendPacket("HELLO!");
 
     is_setup = true;
@@ -164,8 +163,11 @@ void loop() {
     Serial.println();
     
   } else { // When we are not in Debug, we send packets
-    // Packet = #Oxyh#Pxyh#Fxyh#Crgb
-    RS485comm::sendPacket("PLEASE V5 RESPOND!!");
-    RS485comm::printStats();
+    static uint32_t last = 0;
+    if (millis() - last > 100) {  // send every 100 ms
+      RS485comm::sendPacket("HELLO!");
+      last = millis();
+      RS485comm::printStats();
+    }
   }
 }

@@ -28,5 +28,7 @@
 #define PHY_TICK_P_IN 162.9746617
 
 // Communication
-#define COMM_EN_PIN 0
+#define COMM_EN_PIN 4
+#define COMM_RX_PIN 2
+#define COMM_TX_PIN 3
 

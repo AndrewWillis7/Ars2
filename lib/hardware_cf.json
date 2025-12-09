@@ -33,6 +33,8 @@
     },
 
     "comm": {
-        "en_pin": 0
+        "en_pin": 4,
+        "rx_pin": 2,
+        "tx_pin": 3
     }
 }

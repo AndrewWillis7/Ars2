@@ -119,8 +119,26 @@ void default_startup() {
     is_setup = true;
 }
 
+void comm_startup() {
+    Serial.begin(115200);
+    RS485comm::begin(Serial1, 115200);
+    delay(100);
+    //rs485rx.setup();
+
+    while (!Serial.available()) delay(10);
+    Serial.read();
+
+    Serial.print("Expecting Input to be sent");
+
+    RS485comm::enableTX();
+    RS485comm::sendPacket("HELLO!");
+
+    is_setup = true;
+}
+
 void setup() {
-  debug_startup();
+  comm_startup();
+  //debug_startup();
   //default_startup();
 }
 
@@ -147,5 +165,7 @@ void loop() {
     
   } else { // When we are not in Debug, we send packets
     // Packet = #Oxyh#Pxyh#Fxyh#Crgb
+    RS485comm::sendPacket("PLEASE V5 RESPOND!!");
+    RS485comm::printStats();
   }
 }

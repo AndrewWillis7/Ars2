@@ -2,6 +2,14 @@
 
 namespace RS485comm {
 
+// ---------------------------
+// GLOBAL DEFINITIONS
+// ---------------------------
+
+const uint8_t enablePin = COMM_EN_PIN;
+const char HEAD = '#';
+const char* FOOTER = "\r\n";
+
 HardwareSerial* serialPort = nullptr;
 SemaphoreHandle_t RS485_Mutex = nullptr;
 
@@ -11,13 +19,23 @@ uint32_t totalMutexWaits = 0;
 uint32_t bytesSent = 0;
 uint32_t packetsSent = 0;
 
+// ---------------------------
+// LOW-LEVEL PIN CONTROL
+// ---------------------------
+
 void enableTX() {
+    // DE/RE high → transmit mode
     digitalWrite(enablePin, HIGH);
 }
 
 void enableRX() {
+    // DE/RE low → receive mode
     digitalWrite(enablePin, LOW);
 }
+
+// ---------------------------
+// INITIALIZATION
+// ---------------------------
 
 void begin(HardwareSerial& serial, uint32_t baud) {
     serialPort = &serial;
@@ -27,36 +45,95 @@ void begin(HardwareSerial& serial, uint32_t baud) {
     }
 
     pinMode(enablePin, OUTPUT);
-    enableRX(); // recieve by default
+    enableRX(); // idle state → receiver enabled
 
-    serialPort->begin(baud);
-    delay(100);
+    serialPort->begin(baud, COMM_RX_PIN, COMM_TX_PIN);
+    delay(50); // settle
 }
+
+// ---------------------------
+// RAW SEND
+// ---------------------------
 
 void sendRaw(const char* data) {
-    if (!serialPort) return;
+    if (!serialPort || !data) {
+        Serial.print("No Serial port found, or no data. . .");
+        return;
+    }
+
+    //data += FOOTER;
     size_t len = strlen(data);
-    serialPort->write((const uint8_t*)data, len);
+    serialPort->write(reinterpret_cast<const uint8_t*>(data), len);
     bytesSent += len;
+    Serial.println("Packet has been sent");
 }
 
-void sendPacket(const char* payload) {
-    Scoped485 guard; // takes mutex and enables TX
+// ---------------------------
+// PACKET SEND
+// ---------------------------
 
-    if (!serialPort) return;
+void sendPacket(const char* payload) {
+    if (!serialPort || !payload) {
+        Serial.print("No Serial Port found, or no data. . .");
+        return;
+    }
+
+    Scoped485 guard; // mutex + TX enable
 
     serialPort->print(HEAD);
     serialPort->print(payload);
     serialPort->print(FOOTER);
 
+    bytesSent += (strlen(payload) + 5);
+
     packetsSent++;
+    //Serial.println("Packet has been sent");
 }
+
+// ---------------------------
+// MUTEX CONTROL
+// ---------------------------
+
+void lock() {
+    uint32_t t0 = micros();
+    xSemaphoreTake(RS485_Mutex, portMAX_DELAY);
+    totalLocks++;
+    totalMutexWaits += (micros() - t0);
+}
+
+void unlock() {
+    xSemaphoreGive(RS485_Mutex);
+    totalUnlocks++;
+}
+
+// ---------------------------
+// SCOPED GUARD
+// ---------------------------
+
+Scoped485::Scoped485() {
+    lock();
+    enableTX();
+    delayMicroseconds(50); // chip settle time
+}
+
+Scoped485::~Scoped485() {
+    enableRX();
+    unlock();
+}
+
+// ---------------------------
+// DEBUG
+// ---------------------------
 
 void printStats() {
     Serial.printf(
         "[RS485] locks=%u unlocks=%u wait=%uus bytes=%u packets=%u\n",
-        totalLocks, totalUnlocks, totalMutexWaits, bytesSent, packetsSent
+        totalLocks,
+        totalUnlocks,
+        totalMutexWaits,
+        bytesSent,
+        packetsSent
     );
 }
 
-} // eol namespace
+} // namespace RS485comm

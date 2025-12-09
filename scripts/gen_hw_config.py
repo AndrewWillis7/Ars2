@@ -41,6 +41,8 @@ ticksPerInch = data["phy"]["t_p_in"]
 # COMMUNICATION
 
 rs_enablePin = data["comm"]["en_pin"]
+rx_recievePin = data["comm"]["rx_pin"]
+tx_transmitPin = data["comm"]['tx_pin']
 
 header = f"""#pragma once
 
@@ -73,6 +75,8 @@ header = f"""#pragma once
 
 // Communication
 #define COMM_EN_PIN {rs_enablePin}
+#define COMM_RX_PIN {rx_recievePin}
+#define COMM_TX_PIN {tx_transmitPin}
 
 """
 

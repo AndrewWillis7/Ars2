@@ -91,9 +91,9 @@ void loop() {
     
     snprintf(buf, sizeof(buf),
       "P%+03.0f,%+03.0f,%+03.0fO%+03.0f,%+03.0f,%+03.0f",
-      opt1.pos.x * 100.0f,
-      opt1.pos.y * 100.0f,
-      opt1.pos.h * 100.0f,
+      (opt1.pos.x + opt2.pos.x)/2 * 100.0f,
+      (opt1.pos.y + opt2.pos.y)/2 * 100.0f,
+      (opt1.pos.h + opt2.pos.h)/2 * 100.0f,
       odoCalc.x  * 100.0f,
       odoCalc.y  * 100.0f,
       odoCalc.h  * 100.0f

@@ -12,7 +12,15 @@
 
     "s_op": {
         "opc1": 3,
-        "opc2": 4
+        "opc2": 4,
+
+        "op1_off_x": 0,
+        "op1_off_y": 0,
+        "op1_off_h": 0,
+
+        "op2_off_x": 0,
+        "op2_off_y": 0,
+        "op2_off_h": 0
     },
 
     "en_chip": {

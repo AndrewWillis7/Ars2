@@ -32,3 +32,12 @@
 #define COMM_RX_PIN 3
 #define COMM_TX_PIN 2
 
+// Offsets
+#define OFF_1_X 0
+#define OFF_1_Y 0
+#define OFF_1_H 0
+
+#define OFF_2_X 0
+#define OFF_2_Y 0
+#define OFF_2_H 0
+

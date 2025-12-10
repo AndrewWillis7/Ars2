@@ -4,8 +4,8 @@
 
 class OpticalSensor : public SensorBase {
 public:
-    OpticalSensor(const char* name, uint8_t channel)
-        : SensorBase(name, channel)
+    OpticalSensor(const char* name, uint8_t channel, float offsetX, float offsetY, float offsetH)
+        : SensorBase(name, channel), off_x(offsetX), off_y(offsetY), off_h(offsetH)
     {}
 
     void setup() override {
@@ -25,6 +25,11 @@ public:
 
         Serial.printf("OTOS on CH%u initialized OK\n", _muxChannel);
 
+        offset.x = off_x;
+        offset.y = off_y;
+        offset.h = off_h;
+
+        otos.setOffset(offset);
         otos.calibrateImu();
         otos.resetTracking();
     }
@@ -47,5 +52,10 @@ public:
 
     sfe_otos_pose2d_t pos;
 private:
+    float off_x;
+    float off_y;
+    float off_h;
+
+    sfe_otos_pose2d_t offset;
     QwiicOTOS otos;
 };

@@ -12,8 +12,8 @@
 ColorSensor color1("Color1", HW_SC_CS1);
 ColorSensor color2("Color2", HW_SC_CS2);
 
-OpticalSensor opt1("Optical1", HW_SC_OP1);
-OpticalSensor opt2("Optical2", HW_SC_OP2);
+OpticalSensor opt1("Optical1", HW_SC_OP1, OFF_1_X, OFF_1_Y, OFF_1_H);
+OpticalSensor opt2("Optical2", HW_SC_OP2, OFF_2_X, OFF_2_Y, OFF_2_H);
 
 EncoderSensor enc1("Encoder1", HW_SC_EN1);
 EncoderSensor enc2("Encoder2", HW_SC_EN2);
@@ -45,7 +45,7 @@ void default_startup() {
     //color2.setup();
 
     opt1.setup();
-    //opt2.setup();
+    opt2.setup();
 
     enc1.setup();
     enc2.setup();
@@ -57,7 +57,7 @@ void default_startup() {
     //color2.startTask(50, 1);
 
     opt1.startTask(50, 1);
-    //opt2.startTask(50, 1);
+    opt2.startTask(50, 1);
 
     enc1.startTask(50, 1, 1);
     enc2.startTask(50, 1, 1);

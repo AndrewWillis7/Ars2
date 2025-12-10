@@ -25,6 +25,14 @@ color2 = data["s_cs"]["csc2"]
 optical1 = data["s_op"]["opc1"]
 optical2 = data["s_op"]["opc2"]
 
+opt1_off_x = data ["s_op"]["op1_off_x"]
+opt1_off_y = data ["s_op"]["op1_off_y"]
+opt1_off_h = data ["s_op"]["op1_off_h"]
+
+opt2_off_x = data ["s_op"]["op2_off_x"]
+opt2_off_y = data ["s_op"]["op2_off_y"]
+opt2_off_h = data ["s_op"]["op2_off_h"]
+
 encoderCLK = data["en_chip"]["enclk"]
 encoderCS = data["en_chip"]["encs"]
 
@@ -77,6 +85,15 @@ header = f"""#pragma once
 #define COMM_EN_PIN {rs_enablePin}
 #define COMM_RX_PIN {rx_recievePin}
 #define COMM_TX_PIN {tx_transmitPin}
+
+// Offsets
+#define OFF_1_X {opt1_off_x}
+#define OFF_1_Y {opt1_off_y}
+#define OFF_1_H {opt1_off_h}
+
+#define OFF_2_X {opt2_off_x}
+#define OFF_2_Y {opt2_off_y}
+#define OFF_2_H {opt2_off_h}
 
 """
 

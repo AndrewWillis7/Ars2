@@ -34,7 +34,7 @@
 
     "comm": {
         "en_pin": 4,
-        "rx_pin": 2,
-        "tx_pin": 3
+        "rx_pin": 3,
+        "tx_pin": 2
     }
 }

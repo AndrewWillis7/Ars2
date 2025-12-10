@@ -130,7 +130,7 @@ void comm_startup() {
 
     Serial.print("Expecting Input to be sent");
 
-    RS485comm::sendPacket("HELLO!");
+    RS485comm::sendPacket("HELLO");
 
     is_setup = true;
 }
@@ -164,8 +164,8 @@ void loop() {
     
   } else { // When we are not in Debug, we send packets
     static uint32_t last = 0;
-    if (millis() - last > 100) {  // send every 100 ms
-      RS485comm::sendPacket("HELLO!");
+    if (millis() - last > 1) {  // send every 100 ms
+      RS485comm::sendPacket("HELLO");
       last = millis();
       RS485comm::printStats();
     }

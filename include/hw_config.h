@@ -29,6 +29,6 @@
 
 // Communication
 #define COMM_EN_PIN 4
-#define COMM_RX_PIN 2
-#define COMM_TX_PIN 3
+#define COMM_RX_PIN 3
+#define COMM_TX_PIN 2
 

@@ -30,115 +30,55 @@ RS485Reciever rs485rx;
 bool is_setup = false;
 
 //
-bool debugModeSensor = false;
+bool debugModeSensor = true;
+char buf[256];
 //
 
-// -- Start-Ups --
-void debug_startup() {
-    Serial.begin(115200);
-    RS485comm::begin(Serial1, 115200);
-    delay(100);
-    I2CUtils::begin();
-    rs485rx.setup();
-
-    while (!Serial.available()) delay(10);
-    Serial.read();
-
-    I2CUtils::scanI2C();
-
-    // Setups
-    while (!Serial.available()) delay(10);
-    Serial.read();
-
-    color1.setup();
-    color2.setup();
-
-    opt1.setup();
-    opt2.setup();
-
-    enc1.setup();
-    enc2.setup();
-    enc3.setup();
-
-    Serial.print("\nSetup Complete! Attempting Comm Ping...");
-
-    RS485comm::sendRaw("PING FROM ESP!");
-    delay(1000); // Wait for response
-
-    // Task Starts
-    while (!Serial.available()) delay(10);
-    Serial.read();
-
-    color1.startTask(50, 1);
-    color2.startTask(50, 1);
-
-    opt1.startTask(50, 1);
-    opt2.startTask(50, 1);
-
-    enc1.startTask(50, 1, 1);
-    enc2.startTask(50, 1, 1);
-    enc3.startTask(50, 1, 1);
-
-    // Post-Process Starts
-    odoCalc.setup();
-
-    is_setup = true;
-}
-
 void default_startup() {
-    Serial.begin(115200);
-    RS485comm::begin(Serial1, 115200);
+    Serial.begin(9600);
+    RS485comm::begin(Serial1, 9600);
     delay(100);
     I2CUtils::begin();
-    rs485rx.setup();
-
-    color1.setup();
-    color2.setup();
-
-    opt1.setup();
-    opt2.setup();
-
-    enc1.setup();
-    enc2.setup();
-    enc3.setup();
-
-    delay(100);
-
-    color1.startTask(50, 1);
-    color2.startTask(50, 1);
-
-    opt1.startTask(50, 1);
-    opt2.startTask(50, 1);
-
-    enc1.startTask(50, 1, 1);
-    enc2.startTask(50, 1, 1);
-    enc3.startTask(50, 1, 1);
-
-    odoCalc.setup();
-
-    is_setup = true;
-}
-
-void comm_startup() {
-    Serial.begin(115200);
-    RS485comm::begin(Serial1, 115200);
-    delay(100);
     //rs485rx.setup();
 
-    while (!Serial.available()) delay(10);
-    Serial.read();
+    //color1.setup();
+    //color2.setup();
 
-    Serial.print("Expecting Input to be sent");
+    opt1.setup();
+    //opt2.setup();
 
-    RS485comm::sendPacket("HELLO");
+    enc1.setup();
+    enc2.setup();
+    enc3.setup();
+
+    delay(100);
+
+    //color1.startTask(50, 1);
+    //color2.startTask(50, 1);
+
+    opt1.startTask(50, 1);
+    //opt2.startTask(50, 1);
+
+    enc1.startTask(50, 1, 1);
+    enc2.startTask(50, 1, 1);
+    enc3.startTask(50, 1, 1);
+
+    odoCalc.setup();
 
     is_setup = true;
+}
+
+void comm_test() {
+  Serial.begin(9600);
+  RS485comm::begin(Serial1, 9600);
+  delay(100);
+
+  is_setup = true;
 }
 
 void setup() {
-  comm_startup();
-  //debug_startup();
-  //default_startup();
+  //comm_test();
+  default_startup();
 }
 
 void loop() {
@@ -147,27 +87,31 @@ void loop() {
   }
 
   static uint32_t last = 0;
-  if (millis() - last > 500 && debugModeSensor) {
-    color1.debugPrint();
-    color2.debugPrint();
+  if (millis() - last > 1) {
+    
+    snprintf(buf, sizeof(buf),
+      "P%+03.0f,%+03.0f,%+03.0fO%+03.0f,%+03.0f,%+03.0f",
+      opt1.pos.x * 100.0f,
+      opt1.pos.y * 100.0f,
+      opt1.pos.h * 100.0f,
+      odoCalc.x  * 100.0f,
+      odoCalc.y  * 100.0f,
+      odoCalc.h  * 100.0f
+    );
 
-    opt1.debugPrint();
-    opt2.debugPrint();
+    // color1.debugPrint();
+    // color2.debugPrint();
 
-    enc1.debugPrint();
-    enc2.debugPrint();
-    enc3.debugPrint();
+    //opt1.debugPrint();
+    // opt2.debugPrint();
+
+    // enc1.debugPrint();
+    // enc2.debugPrint();
+    // enc3.debugPrint();
 
     last = millis();
-    //Serial.print(I2CUtils::getCurrentChannel());
-    Serial.println();
-    
-  } else { // When we are not in Debug, we send packets
-    static uint32_t last = 0;
-    if (millis() - last > 1) {  // send every 100 ms
-      RS485comm::sendPacket("HELLO");
-      last = millis();
-      RS485comm::printStats();
-    }
+    RS485comm::sendPacket(buf);
+    //RS485comm::printStats();
+    Serial.println(buf);
   }
 }

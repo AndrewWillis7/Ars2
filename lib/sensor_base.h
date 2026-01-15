@@ -184,7 +184,7 @@ private:
     void taskLoop() {
         _taskCore = xPortGetCoreID();
 
-        for (;;) {
+        for (;;) { // We use for (;;) because it is intended to NEVER end unless no power, this is an embedded systems concept derived from C
             if (_paused) {
                 vTaskDelay(5 / portTICK_PERIOD_MS);
                 continue;
@@ -206,6 +206,7 @@ private:
                 readRaw();
             }
 
+            // Updates to the stats
             _lastReadDuration = micros() - readStart;
             _avgReadDuration = (_avgReadDuration * 7 + _lastReadDuration) / 8;
             _readCount++;

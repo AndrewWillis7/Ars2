@@ -32,6 +32,10 @@ public:
     // Called by PostProcess per cycle
     uint32_t computeInterval(PostProcess* process, uint32_t delay);
 
+    std::vector<SensorBase*> getSensorStack() {
+        return sensors;
+    }
+
 private:
     Scheduler() = default;
 

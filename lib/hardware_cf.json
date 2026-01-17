@@ -14,13 +14,13 @@
         "opc1": 3,
         "opc2": 4,
 
-        "op1_off_x": 0,
-        "op1_off_y": 0,
+        "op1_off_x": 3.875,
+        "op1_off_y": 4.955,
         "op1_off_h": 0,
 
-        "op2_off_x": 0,
-        "op2_off_y": 0,
-        "op2_off_h": 0
+        "op2_off_x": -3.875,
+        "op2_off_y": 4.955,
+        "op2_off_h": 180
     },
 
     "en_chip": {

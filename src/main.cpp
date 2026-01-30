@@ -61,9 +61,23 @@ void comm_test() {
   is_setup = true;
 }
 
+void scan() {
+    Serial.begin(9600);
+    delay(100);
+    I2CUtils::begin();
+    while (!Serial.available()) {
+        delay(10);  // be polite to the CPU
+    }
+    while (Serial.available()) {
+        Serial.read();  // flush the input buffer
+    }
+    I2CUtils::scanI2C();
+}
+
 void setup() {
   //comm_test();
-  default_startup();
+  //default_startup();
+  scan();
 }
 
 void loop() {
@@ -88,6 +102,13 @@ void loop() {
 
     //opt1.debugPrint();
     //opt2.debugPrint();
+
+    //Serial.print(opt1.pos.x - opt2.pos.x);
+    //Serial.println();
+    //Serial.print(opt1.pos.y - opt2.pos.y);
+    //Serial.println();
+    //Serial.print(opt1.pos.h - opt2.pos.h);
+    //Serial.println();
 
     last = millis();
     RS485comm::sendPacket(buf);

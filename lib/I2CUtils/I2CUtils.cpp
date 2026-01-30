@@ -35,14 +35,21 @@ bool selectChannel(uint8_t ch) {
 }
 
 void scanI2C() {
-    for (uint8_t addr = 1; addr < 127; addr++) {
-        Wire.beginTransmission(addr);
-        uint8_t err = Wire.endTransmission();
-        if (err == 0) {
-            Serial.printf("FOUND DEVICE at 0x%02X\n", addr);
+    for (uint8_t ch = 0; ch < 8; ch++) {
+        selectChannel(ch);
+        delay(2); // let the bus settle
+
+        //Serial.printf("Scanning mux channel %d\n", ch);
+
+        for (uint8_t addr = 1; addr < 127; addr++) {
+            Wire.beginTransmission(addr);
+            if (Wire.endTransmission() == 0) {
+                Serial.printf("  FOUND 0x%02X on channel %d\n", addr, ch);
+            }
         }
     }
-    Serial.print("SCAN COMPLETE!");
+
+    Serial.println("SCAN COMPLETE!");
 }
 
 void selectMuxRaw(uint8_t ch) {

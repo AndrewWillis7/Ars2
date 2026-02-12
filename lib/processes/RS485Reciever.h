@@ -19,8 +19,9 @@ protected:
 
         HardwareSerial* port = RS485comm::serialPort;
         if (!port) return;
+        //Serial.println("Hardware Port Found");
 
-        while (port->available()) {
+        while (~replying) {
             char c = port->read();
             processIncoming(c);
         }
@@ -38,7 +39,7 @@ private:
                 inPacket = true;
                 rxBuffer = "";
             }
-            Serial.println("Not In Packet");
+            //Serial.println("Not In Packet");
             return;
         }
 
@@ -48,18 +49,22 @@ private:
             return;
         }
 
-        if (c != '\r') {
-            rxBuffer += c;
-        }
+        if (c == '\r') return;
+        if ((uint8_t)c < 32 || (uint8_t)c > 126) return;
+        rxBuffer += c;
     }
 
     void handlePacket(const String& packet) {
+        replying = true;
         Serial.printf("[RS485] RX: %s\n", packet.c_str());
 
-        char txBuffer[128];  // must be big enough
-        snprintf(txBuffer, sizeof(txBuffer), "<ACK>%s", packet.c_str());
+        char txBuffer[256];  // must be big enough
+        snprintf(txBuffer, sizeof(txBuffer), "%s<ACK>", packet.c_str());
 
-        RS485comm::sendRaw(txBuffer);
+        RS485comm::enableTX(); // Shouldnt be needed :(
+        RS485comm::sendPacket(txBuffer);
+        Serial.printf("[RS485] TX: %s\n", txBuffer);
+        replying = false;
     }
 
 };

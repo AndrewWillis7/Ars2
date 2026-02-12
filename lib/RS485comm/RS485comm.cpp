@@ -42,7 +42,7 @@ void begin(HardwareSerial& serial, uint32_t baud) {
     if (!RS485_Mutex) {
         RS485_Mutex = xSemaphoreCreateMutex();
     }
-
+            Serial.println("Ping");
     pinMode(enablePin, OUTPUT);
     enableRX(); // idle state → receiver enabled
 
@@ -76,6 +76,7 @@ void sendPacket(const char* payload) {
         Serial.print("No Serial Port found, or no data. . .");
         return;
     }
+    serialPort->flush();
 
     Scoped485 guard; // mutex + TX enable
 

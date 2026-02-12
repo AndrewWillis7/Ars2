@@ -1,5 +1,5 @@
 {
-    "baudrate": 115200,
+    "baudrate": 9600,
 
     "i2c": {
         "sda": 5,

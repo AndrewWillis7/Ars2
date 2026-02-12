@@ -14,6 +14,8 @@ public:
 
 protected:
     void runOnce() override {
+        if (replying) return;
+
         HardwareSerial* port = RS485comm::serialPort;
         if (!port) return;
 
@@ -23,13 +25,15 @@ protected:
         }
     }
 
+
 private:
     String rxBuffer;
     bool inPacket = false;
+    volatile bool replying = false;
 
     void processIncoming(char c) {
         if (!inPacket) {
-            if (c == RS485comm::HEAD) {
+            if (c == '#') {
                 inPacket = true;
                 rxBuffer = "";
             }
@@ -49,6 +53,11 @@ private:
 
     void handlePacket(const String& packet) {
         Serial.printf("[RS485] RX: %s\n", packet.c_str());
-        // TODO: dispatch the packet to whoever
+
+        char txBuffer[128];  // must be big enough
+        snprintf(txBuffer, sizeof(txBuffer), "<ACK>%s", packet.c_str());
+
+        RS485comm::sendRaw(txBuffer);
     }
+
 };

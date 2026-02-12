@@ -7,7 +7,6 @@ namespace RS485comm {
 // ---------------------------
 
 const uint8_t enablePin = COMM_EN_PIN;
-const char HEAD = '#';
 const char* FOOTER = "\r\n";
 
 HardwareSerial* serialPort = nullptr;
@@ -80,7 +79,6 @@ void sendPacket(const char* payload) {
 
     Scoped485 guard; // mutex + TX enable
 
-    serialPort->print(HEAD);
     serialPort->print(payload);
     serialPort->print(FOOTER);
 

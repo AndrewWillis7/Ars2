@@ -30,8 +30,8 @@ char buf[256];
 //
 
 void default_startup() {
-    Serial.begin(9600);
-    RS485comm::begin(Serial1, 9600);
+    Serial.begin(baudrate);
+    RS485comm::begin(Serial1, baudrate);
     delay(100);
     I2CUtils::begin();
     //rs485rx.setup();
@@ -53,16 +53,18 @@ void default_startup() {
     is_setup = true;
 }
 
-void comm_test() {
-  Serial.begin(9600);
-  RS485comm::begin(Serial1, 9600);
+void comm_loop() {
+  Serial.begin(baudrate);
+  RS485comm::begin(Serial1, baudrate);
   delay(100);
 
-  is_setup = true;
+  RS485comm::enableRX();
+
+  rs485rx.setup(); 
 }
 
 void scan() {
-    Serial.begin(9600);
+    Serial.begin(baudrate);
     delay(100);
     I2CUtils::begin();
     while (!Serial.available()) {
@@ -75,9 +77,9 @@ void scan() {
 }
 
 void setup() {
-  //comm_test();
   //default_startup();
-  scan();
+  //scan();
+  comm_loop();
 }
 
 void loop() {
@@ -96,19 +98,6 @@ void loop() {
       color1.red, color1.green, color1.blue,
       color2.red, color2.green, color2.blue
     );
-
-    //color1.debugPrint();
-    //color2.debugPrint();
-
-    //opt1.debugPrint();
-    //opt2.debugPrint();
-
-    //Serial.print(opt1.pos.x - opt2.pos.x);
-    //Serial.println();
-    //Serial.print(opt1.pos.y - opt2.pos.y);
-    //Serial.println();
-    //Serial.print(opt1.pos.h - opt2.pos.h);
-    //Serial.println();
 
     last = millis();
     RS485comm::sendPacket(buf);

@@ -2,6 +2,8 @@
 
 //AUTO-GENERATED FILE -- DO NOT EDIT
 
+#define baudrate 115200
+
 // Hardware I2C _
 #define HW_I2C_SDA 5
 #define HW_I2C_SCL 6

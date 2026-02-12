@@ -13,6 +13,9 @@ print(f"[HW-CONFIG] Loading {cfg_path}")
 with open(cfg_path, "r") as f:
     data = json.load(f)
 
+# CONSTANTS
+baudrate = data["baudrate"]
+
 # MUX
 sda = data["i2c"]["sda"]
 scl = data["i2c"]["scl"]
@@ -55,6 +58,8 @@ tx_transmitPin = data["comm"]['tx_pin']
 header = f"""#pragma once
 
 //AUTO-GENERATED FILE -- DO NOT EDIT
+
+#define baudrate {baudrate}
 
 // Hardware I2C _
 #define HW_I2C_SDA {sda}

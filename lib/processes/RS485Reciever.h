@@ -10,6 +10,7 @@ public:
     void setup() override {
         startTask(1, 1); // check every 1ms
         rxBuffer.reserve(128);
+        Serial.println("Init RS485");
     }
 
 protected:
@@ -37,6 +38,7 @@ private:
                 inPacket = true;
                 rxBuffer = "";
             }
+            Serial.println("Not In Packet");
             return;
         }
 

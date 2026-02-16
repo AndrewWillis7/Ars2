@@ -44,11 +44,11 @@ void default_startup() {
 
     delay(100);
 
-    color1.startTask(50, 1);
-    color2.startTask(50, 1);
+    color1.startTask(10, 1);
+    color2.startTask(10, 1);
 
-    opt1.startTask(50, 1);
-    opt2.startTask(50, 1);
+    opt1.startTask(10, 1);
+    opt2.startTask(10, 1);
 
     is_setup = true;
 }

@@ -1,3 +1,4 @@
+#pragma once
 #include "../lib/sensor_base.h"
 #include <Adafruit_TCS34725.h>
 
@@ -30,6 +31,14 @@ public:
 
     void readRaw() override {
         tcs.getRawData(&red, &green, &blue, &clear);
+
+        TelemetryPacket p{};
+        p.tag = (_muxChannel == HW_SC_CS1) ? TelemetryTag::CSA : TelemetryTag::CSB;
+        p.a = red;
+        p.b = green;
+        p.c = blue;
+        p.ms = millis();
+        TelemetryBus::publish(p);
     }
 
     void debugPrint() override {

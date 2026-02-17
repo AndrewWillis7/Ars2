@@ -106,6 +106,17 @@ public:
 
     bool taskRunning() const {return _taskHandle != nullptr;}
 
+    // Sampling Helpers
+    uint32_t readCount() const { return _readCount; }
+
+    // Returns true exactly once per new sample
+    bool consumeUpdate(uint32_t &lastSeen) const {
+        uint32_t now = _readCount;
+        if (now == lastSeen) return false;
+        lastSeen = now;
+        return true;
+    }
+
     // task Control
     void stopTask() {
         if (_taskHandle) {

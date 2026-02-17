@@ -2,6 +2,7 @@
 #include <I2CUtils.h>
 #include <hw_config.h>
 #include <RS485comm.h>
+#include <TelemetryBus.h>
 
 // Sensor Includes
 #include "../lib/sensors/color_sensor.h"
@@ -15,12 +16,11 @@ OpticalSensor opt1("Optical1", HW_SC_OP1, OFF_1_X, OFF_1_Y, OFF_1_H);
 OpticalSensor opt2("Optical2", HW_SC_OP2, OFF_2_X, OFF_2_Y, OFF_2_H);
 
 // Process Includes
-#include "../lib/processes/odometry.h"
-#include "../lib/processes/RS485Reciever.h"
+#include "../lib/Telemetry/RS485Transciever.h"
 
 // Process Objects
 // Odometry odoCalc(&enc1, &enc2, &enc3);
-RS485Reciever rs485rx;
+RS485Transceiver rs485trx;
 
 bool is_setup = false;
 
@@ -29,7 +29,7 @@ bool debugModeSensor = true;
 char buf[256];
 //
 
-void default_startup() {
+void single_startup() {
     Serial.begin(baudrate);
     RS485comm::begin(Serial1, baudrate);
     delay(100);
@@ -53,6 +53,33 @@ void default_startup() {
     is_setup = true;
 }
 
+void h_duplex_startup() {
+  Serial.begin(baudrate);
+  RS485comm::begin(Serial1, baudrate);
+  delay(100);
+
+  I2CUtils::begin();
+  TelemetryBus::begin(32);
+
+  color1.setup();
+  color2.setup();
+  opt1.setup();
+  opt2.setup();
+
+  color1.startTask(10, 1);
+  color2.startTask(10, 1);
+  opt1.startTask(10, 1);
+  opt2.startTask(10, 1);
+
+  Serial.println("Posted and Waiting...");
+
+  RS485comm::enableRX();
+
+  rs485trx.setup();
+
+  is_setup = true;
+}
+
 void comm_loop() {
   Serial.begin(baudrate);
   RS485comm::begin(Serial1, baudrate);
@@ -60,7 +87,7 @@ void comm_loop() {
 
   RS485comm::enableRX();
 
-  rs485rx.setup(); 
+  rs485trx.setup(); 
 }
 
 void scan() {
@@ -73,35 +100,19 @@ void scan() {
     while (Serial.available()) {
         Serial.read();  // flush the input buffer
     }
-    I2CUtils::scanI2C();
+    I2CUtils::scanI2C(); // run scan model
 }
 
 void setup() {
   //default_startup();
   //scan();
-  comm_loop();
+  //comm_loop();
+  h_duplex_startup();
 }
 
+
+
 void loop() {
-  if (!is_setup) {
-    return;
-  }
-
-  static uint32_t last = 0;
-  if (millis() - last > 1) {
-    
-    snprintf(buf, sizeof(buf),
-      "P%+03.0f,%+03.0f,%+03.0fCSA%d,%d,%dCSB%d,%d,%d",
-      (opt1.pos.x + opt2.pos.x)/2 * 100.0f,
-      (opt1.pos.y + opt2.pos.y)/2 * 100.0f,
-      (opt1.pos.h + opt2.pos.h)/2 * 100.0f,
-      color1.red, color1.green, color1.blue,
-      color2.red, color2.green, color2.blue
-    );
-
-    last = millis();
-    RS485comm::sendPacket(buf);
-    //RS485comm::printStats();
-    Serial.println(buf);
-  }
+  if (!is_setup) return;
+  delay(1);
 }

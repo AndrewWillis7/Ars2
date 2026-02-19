@@ -3,116 +3,101 @@
 #include <hw_config.h>
 #include <RS485comm.h>
 #include <TelemetryBus.h>
+#include "../lib/globals.h"
 
 // Sensor Includes
 #include "../lib/sensors/color_sensor.h"
 #include "../lib/sensors/optical_sensor.h"
 
-// Sensor Objects
-ColorSensor color1("Color1", HW_SC_CS1);
-ColorSensor color2("Color2", HW_SC_CS2);
-
-OpticalSensor opt1("Optical1", HW_SC_OP1, OFF_1_X, OFF_1_Y, OFF_1_H);
-OpticalSensor opt2("Optical2", HW_SC_OP2, OFF_2_X, OFF_2_Y, OFF_2_H);
-
-// Process Includes
+// Processes
 #include "../lib/Telemetry/RS485Transciever.h"
 
-// Process Objects
-// Odometry odoCalc(&enc1, &enc2, &enc3);
-RS485Transceiver rs485trx;
+// statics and vars
+static uint32_t HEARTBEAT_INTERVAL_MS = 5000;
+uint32_t lastHeartbeat = 0;
+static std::vector<SensorBase*> activeSensors;
 
-bool is_setup = false;
+// ---- Process Objects ----
+static RS485Transceiver rs485trx;
 
-//
-bool debugModeSensor = true;
-char buf[256];
-//
+static bool g_ready = false;
 
-void single_startup() {
-    Serial.begin(baudrate);
-    RS485comm::begin(Serial1, baudrate);
-    delay(100);
-    I2CUtils::begin();
-    //rs485rx.setup();
-
-    color1.setup();
-    color2.setup();
-
-    opt1.setup();
-    opt2.setup();
-
-    delay(100);
-
-    color1.startTask(10, 1);
-    color2.startTask(10, 1);
-
-    opt1.startTask(10, 1);
-    opt2.startTask(10, 1);
-
-    is_setup = true;
-}
-
-void h_duplex_startup() {
+static void bringUpCore() {
   Serial.begin(baudrate);
+  delay(50);
+
   RS485comm::begin(Serial1, baudrate);
-  delay(100);
+  RS485comm::enableRX();
 
   I2CUtils::begin();
-  TelemetryBus::begin(32);
+  TelemetryBus::begin(256);
 
-  color1.setup();
-  color2.setup();
-  opt1.setup();
-  opt2.setup();
+  globals::reserveSensors(16);
+  Serial.println("Core Build. Awaiting INIT");
+}
 
-  color1.startTask(10, 1);
-  color2.startTask(10, 1);
-  opt1.startTask(10, 1);
-  opt2.startTask(10, 1);
+static void bringUpSensors() {
+  // Instantiate Sensors
+  using namespace globals;
 
-  Serial.println("Posted and Waiting...");
+  // repeat wait until globals::state == globals::SystemState::Running;
+  while (state != SystemState::RUNNING) {
+    Serial.println("Waiting for INIT");
+    vTaskDelay(pdMS_TO_TICKS(1000));
+  }
 
-  RS485comm::enableRX();
+  Serial.println("Configuration Locked. Bring up Sensors");
 
+  // Loop through the gained sensors and instantiate the objects
+  for (auto &cfg : sensors) {
+    SensorBase* s = nullptr;
+
+    if (cfg.type == "COLOR") {
+      s = new ColorSensor(cfg.name.c_str(), cfg.port);
+    }
+    else if (cfg.type == "OPTICAL") {
+      if (cfg.name == "OPTL") {
+        s = new OpticalSensor(cfg.name.c_str(), cfg.port, offsets[0], offsets[1], offsets[2]);
+      } else if (cfg.name == "OPTR") {
+        s = new OpticalSensor(cfg.name.c_str(), cfg.port, offsets[3], offsets[4], offsets[5]);
+      }
+    }
+    else {
+      Serial.printf("Unknown sensor type: %s\n", cfg.type.c_str());
+      continue;
+    }
+
+    s->setup();
+    s->startTask(10, 1);
+    activeSensors.push_back(s);
+
+    Serial.printf("Started sensor: %s on port %u\n", cfg.name.c_str(), cfg.port);
+  }
+
+  Serial.println("All Sensors started!");
+}
+
+static void bringUpComms() {
   rs485trx.setup();
-
-  is_setup = true;
-}
-
-void comm_loop() {
-  Serial.begin(baudrate);
-  RS485comm::begin(Serial1, baudrate);
-  delay(100);
-
-  RS485comm::enableRX();
-
-  rs485trx.setup(); 
-}
-
-void scan() {
-    Serial.begin(baudrate);
-    delay(100);
-    I2CUtils::begin();
-    while (!Serial.available()) {
-        delay(10);  // be polite to the CPU
-    }
-    while (Serial.available()) {
-        Serial.read();  // flush the input buffer
-    }
-    I2CUtils::scanI2C(); // run scan model
 }
 
 void setup() {
-  //default_startup();
-  //scan();
-  //comm_loop();
-  h_duplex_startup();
+  bringUpCore();
+  bringUpComms();
+
+  Serial.println("System Online.");
+
+  bringUpSensors();
+
+  Serial.println("Sensors Initialized");
+  RS485comm::enableRX();
+  g_ready = true;
 }
 
-
-
 void loop() {
-  if (!is_setup) return;
-  delay(1);
+  uint32_t now = millis();
+  if (now - lastHeartbeat >= HEARTBEAT_INTERVAL_MS) {
+    lastHeartbeat = now;
+    Serial.println("[HEARTBEAT] system posted!");
+  }
 }

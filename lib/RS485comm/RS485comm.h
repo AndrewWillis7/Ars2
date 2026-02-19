@@ -7,7 +7,6 @@
 namespace RS485comm {
 
 extern const uint8_t enablePin;
-extern const char HEAD;
 extern const char* FOOTER;
 
 extern SemaphoreHandle_t RS485_Mutex;

@@ -4,13 +4,15 @@
 enum class TelemetryTag: uint8_t {
     CSA,
     CSB,
-    OPT1,
-    OPT2
+    OPTL,
+    OPTR,
+    NONE
 };
 
 struct TelemetryPacket
 {
     TelemetryTag tag;
+    const char* name;
     int32_t a;
     int32_t b;
     int32_t c;

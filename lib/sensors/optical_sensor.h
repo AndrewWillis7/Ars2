@@ -38,7 +38,7 @@ public:
         otos.getPosition(pos);
 
         TelemetryPacket p{};
-        p.tag = (_muxChannel == HW_SC_OP1) ? TelemetryTag::OPT1 : TelemetryTag::OPT2;
+        p.name = _name;
         p.a = (int32_t)(pos.x * 100.0f);
         p.b = (int32_t)(pos.y * 100.0f);
         p.c = (int32_t)(pos.h);

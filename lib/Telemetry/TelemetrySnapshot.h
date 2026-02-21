@@ -18,8 +18,8 @@ public:
         if (!sendFn) return;
         if (hasCS1)  sendFn(latestCS1);
         if (hasCS2)  sendFn(latestCS2);
-        if (hasOPT1) sendFn(latestOPT1);
-        if (hasOPT2) sendFn(latestOPT2);
+        if (hasOPTL) sendFn(latestOPTL);
+        if (hasOPTR) sendFn(latestOPTR);
     }
 
     bool sendOne(TelemetryTag tag, void (*sendFn)(const TelemetryPacket&)) {
@@ -27,8 +27,8 @@ public:
         switch (tag) {
             case TelemetryTag::CSA:  if (hasCS1)  { sendFn(latestCS1);  return true; } break;
             case TelemetryTag::CSB:  if (hasCS2)  { sendFn(latestCS2);  return true; } break;
-            case TelemetryTag::OPT1: if (hasOPT1) { sendFn(latestOPT1); return true; } break;
-            case TelemetryTag::OPT2: if (hasOPT2) { sendFn(latestOPT2); return true; } break;
+            case TelemetryTag::OPTL: if (hasOPTL) { sendFn(latestOPTL); return true; } break;
+            case TelemetryTag::OPTR: if (hasOPTR) { sendFn(latestOPTR); return true; } break;
             default: break;
         }
         return false;
@@ -40,21 +40,21 @@ public:
         s.toUpperCase();
         if (s == "CSA")  { out = TelemetryTag::CSA;  return true; }
         if (s == "CSB")  { out = TelemetryTag::CSB;  return true; }
-        if (s == "OPT1") { out = TelemetryTag::OPT1; return true; }
-        if (s == "OPT2") { out = TelemetryTag::OPT2; return true; }
+        if (s == "OPTL") { out = TelemetryTag::OPTL; return true; }
+        if (s == "OPTR") { out = TelemetryTag::OPTR; return true; }
         return false;
     }
 
 private:
-    TelemetryPacket latestCS1{}, latestCS2{}, latestOPT1{}, latestOPT2{};
-    bool hasCS1 = false, hasCS2 = false, hasOPT1 = false, hasOPT2 = false;
+    TelemetryPacket latestCS1{}, latestCS2{}, latestOPTL{}, latestOPTR{};
+    bool hasCS1 = false, hasCS2 = false, hasOPTL = false, hasOPTR = false;
 
     void updateCache(const TelemetryPacket& p) {
         switch (p.tag) {
             case TelemetryTag::CSA:  latestCS1  = p; hasCS1  = true; break;
             case TelemetryTag::CSB:  latestCS2  = p; hasCS2  = true; break;
-            case TelemetryTag::OPT1: latestOPT1 = p; hasOPT1 = true; break;
-            case TelemetryTag::OPT2: latestOPT2 = p; hasOPT2 = true; break;
+            case TelemetryTag::OPTL: latestOPTL = p; hasOPTL = true; break;
+            case TelemetryTag::OPTR: latestOPTR = p; hasOPTR = true; break;
             default: break;
         }
     }

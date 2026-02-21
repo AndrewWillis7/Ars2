@@ -50,8 +50,8 @@ private:
         switch (t) {
             case TelemetryTag::CSA: return "CSA";
             case TelemetryTag::CSB: return "CSB";
-            case TelemetryTag::OPT1: return "OPT1";
-            case TelemetryTag::OPT2: return "OPT2";
+            case TelemetryTag::OPTL: return "OPTL";
+            case TelemetryTag::OPTR: return "OPTR";
             default: return "UNK";
         }
     }
@@ -59,8 +59,8 @@ private:
     void sendTelemetry(const TelemetryPacket& p) {
         char line[96];
         snprintf(line, sizeof(line),
-                 "#<ACK><%s>(%+ld, %+ld, %+ld)<$>\n",
-                 tagToStr(p.tag),
+                 "%s(%+ld, %+ld, %+ld)<$>",
+                 p.name,
                  (long)p.a, (long)p.b, (long)p.c);
 
         RS485comm::sendPacket(line);
@@ -112,25 +112,33 @@ private:
         Serial.print("Recieved: ");
         Serial.println(cmdRaw);
 
-        if (cmd.indexOf("DATA") > -1 || cmd.startsWith("<DATA ")) {
+        if (cmd.indexOf("DATA") > -1) {
             //replying = true;
             //RS485comm::enableTX();
 
             // ensure thunk has the right instance
             instance = this;
 
+            RS485comm::sendPacket("<ACK><DATA>");
+            snapshot.sendAll(&RS485Transceiver::sendTelemetryThunk);
+            RS485comm::sendPacket("<EOL>");
+
+            /*
             if (cmd == "DATA") {
                 snapshot.sendAll(&RS485Transceiver::sendTelemetryThunk);
+                RS485comm::sendPacket("<EOL>");
             } else {
                 // Parse tag after "DATA "
                 String arg = cmdRaw.substring(4); // keep original spacing, case irrelevant
                 TelemetryTag t;
                 if (TelemetrySnapshot::parseTag(arg, t)) {
                     snapshot.sendOne(t, &RS485Transceiver::sendTelemetryThunk);
+                    RS485comm::sendPacket("<EOL>");
                 } else {
-                    RS485comm::sendPacket("#<ACK><DATA>(BADTAG)<EOL>");
+                    RS485comm::sendPacket("<ACK><DATA>(BADTAG)<EOL>");
                 }
             }
+            */
 
             //RS485comm::enableRX();
             

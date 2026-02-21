@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <I2CUtils.h>
+#include <TelemetryPacket.h>
 #include "scheduler.h"
 
 /*
@@ -169,6 +170,8 @@ protected:
     uint32_t _minInterval = 10;
     uint32_t _maxInterval = 200;
     uint32_t _currentInterval = 50;
+
+    TelemetryTag _tag = TelemetryTag::NONE;
 
 private:
     // static call for FreeRTOS

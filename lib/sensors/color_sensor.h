@@ -33,7 +33,7 @@ public:
         tcs.getRawData(&red, &green, &blue, &clear);
 
         TelemetryPacket p{};
-        p.tag = (_muxChannel == HW_SC_CS1) ? TelemetryTag::CSA : TelemetryTag::CSB;
+        p.name = _name;
         p.a = red;
         p.b = green;
         p.c = blue;

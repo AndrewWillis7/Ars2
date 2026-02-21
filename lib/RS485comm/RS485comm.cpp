@@ -84,9 +84,9 @@ void sendPacket(const char* payload) {
     serialPort->print(FOOTER);
 
     //debug 
-    Serial.print("Sending: ");
-    Serial.print(payload);
-    Serial.print(FOOTER);
+    //Serial.print("Sending: ");
+    //Serial.print(payload);
+    //Serial.print(FOOTER);
 
     bytesSent += (strlen(payload) + 3);
 

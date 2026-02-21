@@ -45,17 +45,6 @@ private:
     bool inPacket = false;
     volatile bool replying = false;
 
-    // --- Your existing formatter stays here (or move it too if you want) ---
-    const char* tagToStr(TelemetryTag t) {
-        switch (t) {
-            case TelemetryTag::CSA: return "CSA";
-            case TelemetryTag::CSB: return "CSB";
-            case TelemetryTag::OPTL: return "OPTL";
-            case TelemetryTag::OPTR: return "OPTR";
-            default: return "UNK";
-        }
-    }
-
     void sendTelemetry(const TelemetryPacket& p) {
         char line[96];
         snprintf(line, sizeof(line),

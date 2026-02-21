@@ -171,8 +171,6 @@ protected:
     uint32_t _maxInterval = 200;
     uint32_t _currentInterval = 50;
 
-    TelemetryTag _tag = TelemetryTag::NONE;
-
 private:
     // static call for FreeRTOS
     static void _taskEntry(void* ptr) {

@@ -4,7 +4,9 @@
 
 class TelemetrySnapshot {
 public:
-    // Drain telemetry queue and update the latest cache memory
+    // Tune this to your max sensor count (you reserve 16 elsewhere)
+    static constexpr size_t MAX_SENSORS = 16;
+
     void ingestFromBus(uint32_t maxDrain = 32) {
         TelemetryPacket p;
         for (uint32_t i = 0; i < maxDrain; i++) {
@@ -13,49 +15,60 @@ public:
         }
     }
 
-    // Send a snapshot when requested
     void sendAll(void (*sendFn)(const TelemetryPacket&)) const {
         if (!sendFn) return;
-        if (hasCS1)  sendFn(latestCS1);
-        if (hasCS2)  sendFn(latestCS2);
-        if (hasOPTL) sendFn(latestOPTL);
-        if (hasOPTR) sendFn(latestOPTR);
-    }
 
-    bool sendOne(TelemetryTag tag, void (*sendFn)(const TelemetryPacket&)) {
-        if (!sendFn) return false;
-        switch (tag) {
-            case TelemetryTag::CSA:  if (hasCS1)  { sendFn(latestCS1);  return true; } break;
-            case TelemetryTag::CSB:  if (hasCS2)  { sendFn(latestCS2);  return true; } break;
-            case TelemetryTag::OPTL: if (hasOPTL) { sendFn(latestOPTL); return true; } break;
-            case TelemetryTag::OPTR: if (hasOPTR) { sendFn(latestOPTR); return true; } break;
-            default: break;
+        for (size_t i = 0; i < _count; i++) {
+            if (_entries[i].valid) sendFn(_entries[i].pkt);
         }
-        return false;
     }
 
-    static bool parseTag(const String& sRaw, TelemetryTag& out) {
-        String s = sRaw;
-        s.trim();
-        s.toUpperCase();
-        if (s == "CSA")  { out = TelemetryTag::CSA;  return true; }
-        if (s == "CSB")  { out = TelemetryTag::CSB;  return true; }
-        if (s == "OPTL") { out = TelemetryTag::OPTL; return true; }
-        if (s == "OPTR") { out = TelemetryTag::OPTR; return true; }
+    // Optional: send one packet by name (for DATA(Color1) style requests)
+    bool sendOneByName(const String& nameRaw, void (*sendFn)(const TelemetryPacket&)) const {
+        if (!sendFn) return false;
+
+        String name = nameRaw;
+        name.trim();
+        if (name.length() == 0) return false;
+
+        for (size_t i = 0; i < _count; i++) {
+            if (!_entries[i].valid) continue;
+            if (_entries[i].pkt.name && name.equalsIgnoreCase(_entries[i].pkt.name)) {
+                sendFn(_entries[i].pkt);
+                return true;
+            }
+        }
         return false;
     }
 
 private:
-    TelemetryPacket latestCS1{}, latestCS2{}, latestOPTL{}, latestOPTR{};
-    bool hasCS1 = false, hasCS2 = false, hasOPTL = false, hasOPTR = false;
+    struct Entry {
+        TelemetryPacket pkt{};
+        bool valid = false;
+    };
+
+    Entry _entries[MAX_SENSORS]{};
+    size_t _count = 0;
 
     void updateCache(const TelemetryPacket& p) {
-        switch (p.tag) {
-            case TelemetryTag::CSA:  latestCS1  = p; hasCS1  = true; break;
-            case TelemetryTag::CSB:  latestCS2  = p; hasCS2  = true; break;
-            case TelemetryTag::OPTL: latestOPTL = p; hasOPTL = true; break;
-            case TelemetryTag::OPTR: latestOPTR = p; hasOPTR = true; break;
-            default: break;
+        if (!p.name) return;
+
+        // 1) Update existing entry if name matches
+        for (size_t i = 0; i < _count; i++) {
+            if (_entries[i].valid && _entries[i].pkt.name && strcmp(_entries[i].pkt.name, p.name) == 0) {
+                _entries[i].pkt = p;
+                _entries[i].valid = true;
+                return;
+            }
         }
+
+        // 2) Otherwise add new entry (if space)
+        if (_count < MAX_SENSORS) {
+            _entries[_count].pkt = p;
+            _entries[_count].valid = true;
+            _count++;
+        }
+
+        //TODO: 3) If full, you can either drop or overwrite (currently drop).
     }
 };

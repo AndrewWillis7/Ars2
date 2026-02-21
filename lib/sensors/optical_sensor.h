@@ -11,7 +11,6 @@ public:
     void setup() override {
         I2CUtils::i2cLock();
         bool muxOK = I2CUtils::selectChannel(_muxChannel);
-        I2CUtils::i2cUnlock();
 
         if (!muxOK) {
             Serial.printf("[%s] MUX select failed\n", _name);
@@ -32,6 +31,7 @@ public:
         otos.setOffset(offset);
         otos.calibrateImu();
         otos.resetTracking();
+        I2CUtils::i2cUnlock();
     }
 
     void readRaw() override {

@@ -4,4 +4,6 @@ namespace globals {
     std::vector<SensorConfig> sensors;
     std::vector<float> offsets;
     //volatile SystemState state = SystemState::WAIT_CONFIG;
+
+    volatile bool wifi_enabled = false;
 }

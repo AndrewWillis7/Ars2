@@ -2,8 +2,6 @@
 #include <Arduino.h>
 #include <vector>
 
-
-
 namespace globals {
 
 enum class SystemState {
@@ -18,6 +16,8 @@ struct SensorConfig {
 };
 
 static SystemState state = SystemState::WAIT_CONFIG;
+
+extern volatile bool wifi_enabled;
 
 extern std::vector<SensorConfig> sensors;
 

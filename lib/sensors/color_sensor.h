@@ -6,7 +6,7 @@ class ColorSensor : public SensorBase {
 public:
     ColorSensor(const char* name, uint8_t channel)
         : SensorBase(name, channel),
-          tcs(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_4X)
+          tcs(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_16X)
     {}
 
     void setup() override {
@@ -30,7 +30,15 @@ public:
     }
 
     void readRaw() override {
+        //I2CUtils::i2cLock();
+
+        //if (!I2CUtils::selectChannel(_muxChannel)) {
+            //I2CUtils::i2cUnlock();
+            //return;
+        //}
+
         tcs.getRawData(&red, &green, &blue, &clear);
+        //I2CUtils::i2cUnlock();
 
         TelemetryPacket p{};
         p.name = _name;

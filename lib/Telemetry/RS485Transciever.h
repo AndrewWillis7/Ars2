@@ -188,6 +188,7 @@ private:
             }
 
             RS485comm::sendPacket("<ACK><OFFS>(OK)<EOL>");
+            Serial.println("I SENT SOMETHING TO JASON");
             return;
         }
 

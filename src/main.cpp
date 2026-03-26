@@ -37,10 +37,8 @@ static void bringUpCore() {
 }
 
 static void bringUpSensors() {
-  // Instantiate Sensors
   using namespace globals;
 
-  // repeat wait until globals::state == globals::SystemState::Running;
   while (state != SystemState::RUNNING) {
     Serial.println("Waiting for INIT");
     vTaskDelay(pdMS_TO_TICKS(1000));
@@ -48,7 +46,7 @@ static void bringUpSensors() {
 
   Serial.println("Configuration Locked. Bring up Sensors");
 
-  // Loop through the gained sensors and instantiate the objects
+  // First pass: create + setup
   for (auto &cfg : sensors) {
     SensorBase* s = nullptr;
 
@@ -58,7 +56,8 @@ static void bringUpSensors() {
     else if (cfg.type == "OPTICAL") {
       if (cfg.name == "OPTL") {
         s = new OpticalSensor(cfg.name.c_str(), cfg.port, offsets[0], offsets[1], offsets[2]);
-      } else if (cfg.name == "OPTR") {
+      } 
+      else if (cfg.name == "OPTR") {
         s = new OpticalSensor(cfg.name.c_str(), cfg.port, offsets[3], offsets[4], offsets[5]);
       }
     }
@@ -67,11 +66,20 @@ static void bringUpSensors() {
       continue;
     }
 
+    if (s == nullptr) {
+      Serial.printf("Failed to create sensor: %s\n", cfg.name.c_str());
+      continue;
+    }
+
     s->setup();
-    s->startTask(10, 1);
     activeSensors.push_back(s);
 
-    Serial.printf("Started sensor: %s on port %u\n", cfg.name.c_str(), cfg.port);
+    Serial.printf("Setup sensor: %s on port %u\n", cfg.name.c_str(), cfg.port);
+  }
+
+  // Second pass: start tasks only after all setups are done
+  for (auto *s : activeSensors) { //initing sensors AFTER making the list of sensors
+    s->startTask(10, 1);
   }
 
   Serial.println("All Sensors started!");

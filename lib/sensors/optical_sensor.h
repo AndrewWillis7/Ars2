@@ -5,7 +5,7 @@
 class OpticalSensor : public SensorBase {
 public:
     OpticalSensor(const char* name, uint8_t channel, float offsetX, float offsetY, float offsetH)
-        : SensorBase(name, channel), off_x(offsetX), off_y(offsetY), off_h(offsetH)
+        : SensorBase(name, channel), off_x(offsetX), off_y(offsetY), off_h(offsetH), initialized(false)
     {}
 
     void setup() override {
@@ -14,11 +14,15 @@ public:
 
         if (!muxOK) {
             Serial.printf("[%s] MUX select failed\n", _name);
+            I2CUtils::i2cUnlock();
+            initialized = false;
             return;
         }
 
         if (!otos.begin()) {
             Serial.printf("[%s] OTOS not found!\n", _name);
+            I2CUtils::i2cUnlock();
+            initialized = false;
             return;
         }
 
@@ -31,11 +35,23 @@ public:
         otos.setOffset(offset);
         otos.calibrateImu();
         otos.resetTracking();
+
+        initialized = true;
         I2CUtils::i2cUnlock();
     }
 
     void readRaw() override {
+        //if (!initialized) return;
+
+        //I2CUtils::i2cLock();
+
+        //if (!I2CUtils::selectChannel(_muxChannel)) {
+            //I2CUtils::i2cUnlock();
+            //return;
+        //}
+
         otos.getPosition(pos);
+        //I2CUtils::i2cUnlock();
 
         TelemetryPacket p{};
         p.name = _name;
@@ -59,11 +75,13 @@ public:
     }
 
     sfe_otos_pose2d_t pos;
+
 private:
     float off_x;
     float off_y;
     float off_h;
 
+    bool initialized;
     sfe_otos_pose2d_t offset;
     QwiicOTOS otos;
 };

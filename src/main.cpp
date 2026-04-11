@@ -4,6 +4,7 @@
 #include <RS485comm.h>
 #include <TelemetryBus.h>
 #include "../lib/globals.h"
+#include "../lib/Engines/lighting_engine.h"
 
 // Sensor Includes
 #include "../lib/sensors/color_sensor.h"
@@ -19,6 +20,7 @@ static std::vector<SensorBase*> activeSensors;
 
 // ---- Process Objects ----
 static RS485Transceiver rs485trx;
+static LightingEngine lightingEngine;
 
 static bool g_ready = false;
 
@@ -87,6 +89,12 @@ static void bringUpSensors() {
 
 static void bringUpComms() {
   rs485trx.setup();
+}
+
+static void bringUpLights() {
+  if (globals::lightsConfigured && !lightingEngine.isInitialized()) {
+    lightingEngine.begin();
+  }
 }
 
 void setup() {

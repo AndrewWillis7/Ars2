@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <I2CUtils.h>
 #include <TelemetryPacket.h>
-#include "scheduler.h"
+#include "../lib/scheduler.h"
 
 /*
 Sensor Base

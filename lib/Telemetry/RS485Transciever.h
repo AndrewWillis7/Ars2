@@ -264,6 +264,187 @@ private:
             return;
         }
 
+        // Lights Configuration // 
+
+        // Something like this: <LINT><91>(FRONT,5,30)(REAR,6,30)(LEFT,7,16)(RIGHT,8,16)(TOP,9,8)(BOTTOM,10,8)<EOL>
+        if (cmd.indexOf("LINT") >= 0) {
+
+    if (globals::lightsConfigured) {
+        RS485comm::sendPacket("<ACK><LINT>(ALREADY_CONFIGURED)<EOL>");
+        return;
+    }
+
+    int open = cmd.indexOf('(');
+    int close = cmd.lastIndexOf(')');
+
+    if (open < 0 || close < 0 || close <= open) {
+        RS485comm::sendPacket("<ACK><LINT>(BADFORMAT)<EOL>");
+        return;
+    }
+
+    String args = cmd.substring(open, close + 1);
+    args.trim();
+
+    size_t added = 0, bad = 0;
+    int i = 0;
+
+    while (true) {
+        int tupleStart = args.indexOf('(', i);
+        if (tupleStart < 0) break;
+
+        int tupleEnd = args.indexOf(')', tupleStart + 1);
+        if (tupleEnd < 0) {
+            bad++;
+            break;
+        }
+
+        String tuple = args.substring(tupleStart + 1, tupleEnd);
+        tuple.trim();
+
+        int c1 = tuple.indexOf(',');
+        int c2 = tuple.indexOf(',', c1 + 1);
+
+        if (c1 < 0 || c2 < 0) {
+            bad++;
+        } else {
+            globals::LightConfig cfg;
+
+            cfg.name = tuple.substring(0, c1);
+            cfg.name.trim();
+
+            String gpioStr = tuple.substring(c1 + 1, c2);
+            gpioStr.trim();
+
+            String countStr = tuple.substring(c2 + 1);
+            countStr.trim();
+
+            cfg.gpio = (uint8_t)gpioStr.toInt();
+            cfg.count = (uint16_t)countStr.toInt();
+
+            if (cfg.name.length() == 0 || cfg.count == 0) {
+                bad++;
+            } else {
+                globals::lights.push_back(cfg);
+
+                globals::LightState st;
+                st.name = cfg.name;
+                st.r = 0;
+                st.g = 0;
+                st.b = 0;
+                st.brightness = 255;
+                st.pattern = globals::LightPattern::OFF;
+                st.periodMs = 1000;
+
+                globals::lightStates.push_back(st);
+
+                added++;
+            }
+        }
+
+        i = tupleEnd + 1;
+    }
+
+    if (added > 0) {
+        globals::lightsConfigured = true;
+    }
+
+    char resp[80];
+    snprintf(resp, sizeof(resp), "<ACK><LINT>(ADDED=%u,BAD=%u)<EOL>",
+             (unsigned)added, (unsigned)bad);
+    RS485comm::sendPacket(resp);
+
+    return;
+}
+
+if (cmd.indexOf("LSET") >= 0) {
+
+    if (!globals::lightsConfigured || globals::lights.empty()) {
+        RS485comm::sendPacket("<ACK><LSET>(NO_LIGHTS)<EOL>");
+        return;
+    }
+
+    int open = cmd.indexOf('(');
+    int close = cmd.lastIndexOf(')');
+
+    if (open < 0 || close < 0 || close <= open) {
+        RS485comm::sendPacket("<ACK><LSET>(BADFORMAT)<EOL>");
+        return;
+    }
+
+    String args = cmd.substring(open, close + 1);
+    args.trim();
+
+    size_t updated = 0, missing = 0, bad = 0;
+    int i = 0;
+
+    while (true) {
+        int tupleStart = args.indexOf('(', i);
+        if (tupleStart < 0) break;
+
+        int tupleEnd = args.indexOf(')', tupleStart + 1);
+        if (tupleEnd < 0) {
+            bad++;
+            break;
+        }
+
+        String tuple = args.substring(tupleStart + 1, tupleEnd);
+        tuple.trim();
+
+        int c1 = tuple.indexOf(',');
+        int c2 = tuple.indexOf(',', c1 + 1);
+        int c3 = tuple.indexOf(',', c2 + 1);
+        int c4 = tuple.indexOf(',', c3 + 1);
+        int c5 = tuple.indexOf(',', c4 + 1);
+        int c6 = tuple.indexOf(',', c5 + 1);
+
+        if (c1 < 0 || c2 < 0 || c3 < 0 || c4 < 0 || c5 < 0 || c6 < 0) {
+            bad++;
+        } else {
+            String name = tuple.substring(0, c1);
+            name.trim();
+
+            String rStr = tuple.substring(c1 + 1, c2); rStr.trim();
+            String gStr = tuple.substring(c2 + 1, c3); gStr.trim();
+            String bStr = tuple.substring(c3 + 1, c4); bStr.trim();
+            String patternStr = tuple.substring(c4 + 1, c5); patternStr.trim();
+            String brightStr = tuple.substring(c5 + 1, c6); brightStr.trim();
+            String periodStr = tuple.substring(c6 + 1); periodStr.trim();
+
+            bool found = false;
+
+            for (auto& st : globals::lightStates) {
+                if (st.name == name) {
+                    st.r = (uint8_t)constrain(rStr.toInt(), 0, 255);
+                    st.g = (uint8_t)constrain(gStr.toInt(), 0, 255);
+                    st.b = (uint8_t)constrain(bStr.toInt(), 0, 255);
+                    st.pattern = globals::parseLightPattern(patternStr);
+                    st.brightness = (uint8_t)constrain(brightStr.toInt(), 0, 255);
+                    st.periodMs = (uint16_t)max(1L, (long)periodStr.toInt());
+
+                    updated++;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                missing++;
+            }
+        }
+
+        i = tupleEnd + 1;
+    }
+
+    char resp[96];
+    snprintf(resp, sizeof(resp), "<ACK><LSET>(UPDATED=%u,MISSING=%u,BAD=%u)<EOL>",
+             (unsigned)updated, (unsigned)missing, (unsigned)bad);
+    RS485comm::sendPacket(resp);
+
+    return;
+}
+
+        // Setting 
+
         // Ping Pong
         if (cmd.indexOf("PING") > -1) {
             RS485comm::sendPacket("<ACK><UNKO>(PONG-PONG)<EOL>");

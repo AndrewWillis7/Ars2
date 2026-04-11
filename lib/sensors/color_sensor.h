@@ -1,5 +1,5 @@
 #pragma once
-#include "../lib/sensor_base.h"
+#include "../lib/Engines/sensor_base.h"
 #include <Adafruit_TCS34725.h>
 
 class ColorSensor : public SensorBase {

@@ -1,5 +1,5 @@
 #pragma once
-#include "../lib/sensor_base.h"
+#include "../lib/Engines/sensor_base.h"
 #include <SparkFun_Qwiic_OTOS_Arduino_Library.h>
 
 class OpticalSensor : public SensorBase {

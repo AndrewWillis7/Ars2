@@ -2,23 +2,33 @@
 
 LightingEngine::LightingEngine() {}
 
-void LightingEngine::begin() {
-    // Prevent duplicate begin calls from stacking allocated strips
+LightingEngine::~LightingEngine() {
+    clearStrips();
+}
+
+void LightingEngine::clearStrips() {
     for (auto& rt : _strips) {
         if (rt.strip) {
             delete rt.strip;
             rt.strip = nullptr;
         }
     }
-    _strips.clear();
 
-    if (globals::lights.empty()) {
+    _strips.clear();
+    _initialized = false;
+}
+
+void LightingEngine::begin(const std::vector<RuntimeConfig::LightConfig>& configs) {
+    clearStrips();
+
+    if (configs.empty()) {
         Serial.println("[LIGHT] No light configs present, begin skipped");
-        _initialized = false;
         return;
     }
 
-    for (auto& cfg : globals::lights) {
+    _strips.reserve(configs.size());
+
+    for (const auto& cfg : configs) {
         StripRuntime rt;
         rt.name = cfg.name;
         rt.gpio = cfg.gpio;
@@ -45,47 +55,50 @@ void LightingEngine::begin() {
     _initialized = !_strips.empty();
 }
 
-void LightingEngine::update() {
+void LightingEngine::update(const std::vector<RuntimeConfig::LightState>& states) {
     if (!_initialized) return;
 
     uint32_t now = millis();
 
     for (auto& rt : _strips) {
-        globals::LightState* st = findState(rt.name);
+        const RuntimeConfig::LightState* st = findState(states, rt.name);
         if (!st || !rt.strip) continue;
 
         renderStrip(rt, *st, now);
     }
 }
 
-globals::LightState* LightingEngine::findState(const String& name) {
-    for (auto& st : globals::lightStates) {
+const RuntimeConfig::LightState* LightingEngine::findState(
+    const std::vector<RuntimeConfig::LightState>& states,
+    const String& name) const {
+    for (const auto& st : states) {
         if (st.name == name) {
             return &st;
         }
     }
+
     return nullptr;
 }
 
-void LightingEngine::renderStrip(StripRuntime& rt, globals::LightState& st, uint32_t now) {
+void LightingEngine::renderStrip(StripRuntime& rt, const RuntimeConfig::LightState& st, uint32_t now) {
     switch (st.pattern) {
-        case globals::LightPattern::OFF:
+        case RuntimeConfig::LightPattern::OFF:
             renderOff(rt);
             break;
 
-        case globals::LightPattern::CONST:
+        case RuntimeConfig::LightPattern::CONST:
             renderConst(rt, st);
             break;
 
-        case globals::LightPattern::BLINK:
+        case RuntimeConfig::LightPattern::BLINK:
             renderBlink(rt, st, now);
             break;
 
-        case globals::LightPattern::PULSE:
+        case RuntimeConfig::LightPattern::PULSE:
             renderPulse(rt, st, now);
             break;
 
-        case globals::LightPattern::RAINBOW:
+        case RuntimeConfig::LightPattern::RAINBOW:
             renderRainbow(rt, st, now);
             break;
 
@@ -100,7 +113,7 @@ void LightingEngine::renderOff(StripRuntime& rt) {
     rt.strip->show();
 }
 
-void LightingEngine::renderConst(StripRuntime& rt, globals::LightState& st) {
+void LightingEngine::renderConst(StripRuntime& rt, const RuntimeConfig::LightState& st) {
     uint32_t c = makeColor(rt.strip, st.r, st.g, st.b, st.brightness);
 
     for (uint16_t i = 0; i < rt.count; i++) {
@@ -110,7 +123,7 @@ void LightingEngine::renderConst(StripRuntime& rt, globals::LightState& st) {
     rt.strip->show();
 }
 
-void LightingEngine::renderBlink(StripRuntime& rt, globals::LightState& st, uint32_t now) {
+void LightingEngine::renderBlink(StripRuntime& rt, const RuntimeConfig::LightState& st, uint32_t now) {
     uint16_t period = (st.periodMs == 0) ? 1 : st.periodMs;
     bool on = ((now / period) % 2) == 0;
 
@@ -123,7 +136,7 @@ void LightingEngine::renderBlink(StripRuntime& rt, globals::LightState& st, uint
     rt.strip->show();
 }
 
-void LightingEngine::renderPulse(StripRuntime& rt, globals::LightState& st, uint32_t now) {
+void LightingEngine::renderPulse(StripRuntime& rt, const RuntimeConfig::LightState& st, uint32_t now) {
     uint16_t period = (st.periodMs == 0) ? 1 : st.periodMs;
 
     float phase = (float)(now % period) / (float)period;
@@ -139,7 +152,7 @@ void LightingEngine::renderPulse(StripRuntime& rt, globals::LightState& st, uint
     rt.strip->show();
 }
 
-void LightingEngine::renderRainbow(StripRuntime& rt, globals::LightState& st, uint32_t now) {
+void LightingEngine::renderRainbow(StripRuntime& rt, const RuntimeConfig::LightState& st, uint32_t now) {
     (void)st; // currently brightness not applied to rainbow here
 
     uint8_t offset = (now / 20) & 0xFF;

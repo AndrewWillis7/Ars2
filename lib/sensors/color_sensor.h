@@ -1,5 +1,9 @@
 #pragma once
-#include "../lib/Engines/sensor_base.h"
+
+#include <TelemetryBus.h>
+#include <TelemetryPacket.h>
+#include <sensor_base.h>
+
 #include <Adafruit_TCS34725.h>
 
 class ColorSensor : public SensorBase {
@@ -10,11 +14,8 @@ public:
     {}
 
     void setup() override {
-        I2CUtils::i2cLock();
-        bool muxOK = I2CUtils::selectChannel(_muxChannel);
-        I2CUtils::i2cUnlock();
-
-        if (!muxOK) {
+        I2CUtils::ScopedI2C guard(_muxChannel);
+        if (!guard.ok()) {
             Serial.printf("[%s] MUX select failed\n", _name);
             return;
         }
@@ -23,22 +24,19 @@ public:
             Serial.printf("[%s] Color sensor not found!\n", _name);
             return;
         }
-        
+
+        initialized = true;
         Serial.printf("Color sensor on CH%u initialized OK\n", _muxChannel);
         uint8_t id = tcs.read8(TCS34725_ID);
         Serial.printf("CH%u: ID=0x%02X\n", _muxChannel, id);
     }
 
     void readRaw() override {
-        //I2CUtils::i2cLock();
-
-        //if (!I2CUtils::selectChannel(_muxChannel)) {
-            //I2CUtils::i2cUnlock();
-            //return;
-        //}
+        if (!initialized) {
+            return;
+        }
 
         tcs.getRawData(&red, &green, &blue, &clear);
-        //I2CUtils::i2cUnlock();
 
         TelemetryPacket p{};
         p.name = _name;
@@ -57,5 +55,6 @@ public:
     uint16_t red, green, blue, clear;
 
 private:
+    bool initialized = false;
     Adafruit_TCS34725 tcs;
 };

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <Arduino.h>
 #include "scheduler.h"
 
@@ -6,62 +7,26 @@ class PostProcess {
 public:
     friend class Scheduler;
 
-    PostProcess(const char* name) :
-        _name(name),
-        _taskHandle(nullptr),
-        _taskIntervalMs(20)
-    {
-        Scheduler::instance().registerPostProcess(this);
-    }
-
-    virtual ~PostProcess() {}
+    explicit PostProcess(const char* name);
+    virtual ~PostProcess();
 
     virtual void setup() = 0;
-
     virtual void runOnce() = 0;
 
-    void updateBlocking() {runOnce();}
-
-    void startTask(uint32_t intervalMs = 20, BaseType_t core = tskNO_AFFINITY) {
-        _taskIntervalMs = intervalMs;
-        xTaskCreatePinnedToCore(
-            _taskEntry, _name, 4096, this, 1, &_taskHandle, core
-        );
-    }
-
-    bool taskRunning() const {return _taskHandle != nullptr;}
-
-    void stopTask() {
-        if (_taskHandle) {
-            vTaskDelete(_taskHandle);
-            _taskHandle = nullptr;
-        }
-    }
-
-    void pauseTask() {_paused = true;}
-    void resumeTask() {_paused = false;}
-    bool isPaused() const {return _paused;}
-
-    // Debug Interface
-    virtual void debugPrint() {
-        Serial.printf("[%s] No debugPrint override.\n", _name);
-    }
-
-    bool isAlive() const {
-        return (millis() - _lastHeartbeat < 2000);
-    }
-
-    void printStats() {
-        Serial.printf(
-            "[%s] core=%u exec=%u last=%uus avg=%uus hb=%ums\n",
-            _name,
-            _taskCore,
-            _runCount,
-            _lastExecDuration,
-            _avgExecDuration,
-            millis() - _lastHeartbeat
-        );
-    }
+    void updateBlocking();
+    void startTask(
+        uint32_t intervalMs = 20,
+        BaseType_t core = tskNO_AFFINITY,
+        UBaseType_t priority = 1,
+        uint32_t stackWords = 4096);
+    bool taskRunning() const;
+    void stopTask();
+    void pauseTask();
+    void resumeTask();
+    bool isPaused() const;
+    virtual void debugPrint();
+    bool isAlive() const;
+    void printStats();
 
 protected:
     const char* _name;
@@ -81,31 +46,6 @@ protected:
     uint32_t _maxInterval = 200;
 
 private:
-    static void _taskEntry(void* ptr) {
-        reinterpret_cast<PostProcess*>(ptr)->taskLoop();
-    }
-
-    void taskLoop() {
-        _taskCore = xPortGetCoreID();
-
-            for(;;) {
-                if (_paused) {
-                    vTaskDelay(5 / portTICK_PERIOD_MS);
-                    continue;
-                }
-                
-                uint32_t t0 = micros();
-
-                // No I2C lock
-                runOnce();
-
-                _lastExecDuration = micros() - t0;
-                _avgExecDuration = (_avgExecDuration * 7 + _lastExecDuration) / 8;
-                _runCount++;
-                _lastHeartbeat = millis();
-
-                _currentInterval = Scheduler::instance().computeInterval(this, 10);
-                vTaskDelay(_taskIntervalMs / portTICK_PERIOD_MS);
-            }
-        }
+    static void _taskEntry(void* ptr);
+    void taskLoop();
 };

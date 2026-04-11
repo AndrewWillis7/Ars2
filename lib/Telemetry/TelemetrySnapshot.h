@@ -1,9 +1,12 @@
 #pragma once
 #include <Arduino.h>
 #include <TelemetryBus.h>
+#include <cstring>
 
 class TelemetrySnapshot {
 public:
+    using SendFn = void (*)(const TelemetryPacket&, void*);
+
     // Tune this to your max sensor count (you reserve 16 elsewhere)
     static constexpr size_t MAX_SENSORS = 16;
 
@@ -15,16 +18,16 @@ public:
         }
     }
 
-    void sendAll(void (*sendFn)(const TelemetryPacket&)) const {
+    void sendAll(SendFn sendFn, void* context = nullptr) const {
         if (!sendFn) return;
 
         for (size_t i = 0; i < _count; i++) {
-            if (_entries[i].valid) sendFn(_entries[i].pkt);
+            if (_entries[i].valid) sendFn(_entries[i].pkt, context);
         }
     }
 
     // Optional: send one packet by name (for DATA(Color1) style requests)
-    bool sendOneByName(const String& nameRaw, void (*sendFn)(const TelemetryPacket&)) const {
+    bool sendOneByName(const String& nameRaw, SendFn sendFn, void* context = nullptr) const {
         if (!sendFn) return false;
 
         String name = nameRaw;
@@ -34,7 +37,7 @@ public:
         for (size_t i = 0; i < _count; i++) {
             if (!_entries[i].valid) continue;
             if (_entries[i].pkt.name && name.equalsIgnoreCase(_entries[i].pkt.name)) {
-                sendFn(_entries[i].pkt);
+                sendFn(_entries[i].pkt, context);
                 return true;
             }
         }

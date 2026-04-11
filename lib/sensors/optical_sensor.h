@@ -1,5 +1,9 @@
 #pragma once
-#include "../lib/Engines/sensor_base.h"
+
+#include <TelemetryBus.h>
+#include <TelemetryPacket.h>
+#include <sensor_base.h>
+
 #include <SparkFun_Qwiic_OTOS_Arduino_Library.h>
 
 class OpticalSensor : public SensorBase {
@@ -9,19 +13,15 @@ public:
     {}
 
     void setup() override {
-        I2CUtils::i2cLock();
-        bool muxOK = I2CUtils::selectChannel(_muxChannel);
-
-        if (!muxOK) {
+        I2CUtils::ScopedI2C guard(_muxChannel);
+        if (!guard.ok()) {
             Serial.printf("[%s] MUX select failed\n", _name);
-            I2CUtils::i2cUnlock();
             initialized = false;
             return;
         }
 
         if (!otos.begin()) {
             Serial.printf("[%s] OTOS not found!\n", _name);
-            I2CUtils::i2cUnlock();
             initialized = false;
             return;
         }
@@ -37,21 +37,14 @@ public:
         otos.resetTracking();
 
         initialized = true;
-        I2CUtils::i2cUnlock();
     }
 
     void readRaw() override {
-        //if (!initialized) return;
-
-        //I2CUtils::i2cLock();
-
-        //if (!I2CUtils::selectChannel(_muxChannel)) {
-            //I2CUtils::i2cUnlock();
-            //return;
-        //}
+        if (!initialized) {
+            return;
+        }
 
         otos.getPosition(pos);
-        //I2CUtils::i2cUnlock();
 
         TelemetryPacket p{};
         p.name = _name;

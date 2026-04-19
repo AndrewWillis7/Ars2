@@ -6,7 +6,7 @@ class ColorSensor : public SensorBase {
 public:
     ColorSensor(const char* name, uint8_t channel)
         : SensorBase(name, channel),
-          tcs(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_16X)
+          tcs(TCS34725_INTEGRATIONTIME_2_4MS, TCS34725_GAIN_60X)
     {}
 
     void setup() override {
